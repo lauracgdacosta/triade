@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(poetry env *)",
+      "Bash(poetry lock *)",
+      "Bash(poetry install *)",
+      "Bash(./.venv/Scripts/python.exe -m pip install --only-binary=:all: asyncpg)",
+      "Bash(poetry run *)"
+    ]
+  }
+}

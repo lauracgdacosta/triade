@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Meu Dia{% endblock %}
+{% block content %}
+<div class="mb-4">
+    <h2 class="mb-1">{{ summary.greeting }}, {{ user.display_name or user.email.split('@')[0] }}</h2>
+    <p class="text-muted mb-0">{{ format_long_date(summary.today, user_settings.language) }}</p>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-tile">
+            <div class="stat-label">{{ t('dashboard.tasks_total', user_settings.language) }}</div>
+            <div class="stat-value">{{ summary.tasks_total }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-tile">
+            <div class="stat-label">{{ t('dashboard.tasks_done', user_settings.language) }}</div>
+            <div class="stat-value">{{ summary.tasks_done }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-tile">
+            <div class="stat-label">{{ t('dashboard.planned_time', user_settings.language) }}</div>
+            <div class="stat-value">{{ (summary.planned_minutes // 60) }}h{{ '%02d' % (summary.planned_minutes % 60) }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-tile">
+            <div class="stat-label">{{ t('dashboard.remaining_time', user_settings.language) }}</div>
+            <div class="stat-value">{{ (summary.remaining_minutes // 60) }}h{{ '%02d' % (summary.remaining_minutes % 60) }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="triade-card mb-4">
+    <div class="triade-card-body">
+        <div class="d-flex justify-content-between mb-2">
+            <strong>{{ t('dashboard.progress', user_settings.language) }}</strong>
+            <span class="text-muted">{{ summary.progress_percent }}%</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" style="width: {{ summary.progress_percent }}%"></div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">{{ t('dashboard.today_tasks', user_settings.language) }}</h5>
+    <a href="/tasks" class="btn btn-sm btn-outline-primary">{{ t('dashboard.view_all', user_settings.language) }}</a>
+</div>
+
+{% if summary.tasks %}
+    {% for task in summary.tasks %}
+    <div class="task-row {{ 'is-done' if task.status.value == 'done' }}">
+        <span class="task-check {{ 'checked' if task.status.value == 'done' }}">
+            {% if task.status.value == 'done' %}<i class="fa-solid fa-check"></i>{% endif %}
+        </span>
+        <div class="flex-grow-1">
+            <div class="task-title">{{ task.title }}</div>
+            <div class="task-meta">
+                <span class="priority-dot priority-{{ task.priority.value }}"></span>
+                {% if task.time %}<span><i class="fa-regular fa-clock"></i> {{ task.time.strftime('%H:%M') }}</span>{% endif %}
+                {% if task.planned_duration_minutes %}<span>{{ task.planned_duration_minutes }} min</span>{% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <p class="text-muted">{{ t('dashboard.no_tasks', user_settings.language) }} <a href="/tasks">{{ t('nav.tasks', user_settings.language) }}</a>.</p>
+{% endif %}
+{% endblock %}

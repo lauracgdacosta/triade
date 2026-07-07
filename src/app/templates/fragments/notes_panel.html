@@ -1,0 +1,13 @@
+<div class="offcanvas offcanvas-end" tabindex="-1" id="notesPanel" aria-labelledby="notesPanelLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="notesPanelLabel"><i class="fa-solid fa-note-sticky me-2"></i>Notas</h5>
+        <button type="button" class="btn-icon" title="Nova nota"
+                hx-post="/notes/panel/new" hx-target="#notes-panel-body" hx-swap="outerHTML">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        {% include "fragments/notes_panel_body.html" %}
+    </div>
+</div>

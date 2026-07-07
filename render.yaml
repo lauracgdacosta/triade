@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: triade-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /healthz
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_SECRET_KEY
+        generateValue: true
+      - key: APP_BASE_URL
+        sync: false
+      - key: APP_ALLOWED_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_SYNC
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: attachments
+      - key: OAUTH_REDIRECT_URL
+        sync: false
+      - key: SESSION_COOKIE_NAME
+        value: triade_session
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: CSRF_COOKIE_NAME
+        value: triade_csrf
+      - key: RATE_LIMIT_DEFAULT
+        value: 100/minute
+      - key: RATE_LIMIT_AUTH
+        value: 10/minute

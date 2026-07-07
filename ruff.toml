@@ -1,0 +1,17 @@
+line-length = 100
+target-version = "py313"
+src = ["src", "tests"]
+extend-exclude = ["alembic/versions"]
+
+[lint]
+select = [
+    "E", "F", "W", "I", "B", "C4", "UP", "SIM", "RUF", "N", "ASYNC",
+]
+ignore = ["B008", "E501"]
+
+[lint.isort]
+known-first-party = ["app"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

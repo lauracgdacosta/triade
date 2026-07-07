@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Entrando...{% endblock %}
+{% block auth_content %}
+<div class="auth-page">
+    <div class="auth-card text-center">
+        <div class="spinner-border text-primary mb-3" role="status"></div>
+        <p id="callback-message">Concluindo o login...</p>
+    </div>
+</div>
+<script>
+    (function () {
+        const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token");
+        const expires_in = params.get("expires_in");
+        const message = document.getElementById("callback-message");
+
+        if (!access_token || !refresh_token) {
+            message.textContent = "Não foi possível concluir o login. Tente novamente.";
+            return;
+        }
+
+        fetch("/auth/callback/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ access_token, refresh_token, expires_in: Number(expires_in) || 3600 }),
+        })
+            .then((r) => r.json())
+            .then((data) => {
+                window.location.href = data.ok ? "/dashboard" : "/login";
+            })
+            .catch(() => {
+                message.textContent = "Erro ao concluir o login.";
+            });
+    })();
+</script>
+{% endblock %}

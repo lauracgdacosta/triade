@@ -1,0 +1,61 @@
+site_name: Tríade
+site_description: Sistema de Gestão de Tempo, Agenda, Planejamento e Produtividade
+repo_name: triade
+theme:
+  name: material
+  language: pt-BR
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Tema escuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Tema claro
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
+    - search.suggest
+
+plugins:
+  - search
+  - mermaid2
+
+markdown_extensions:
+  - attr_list
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid_custom
+
+nav:
+  - Início: index.md
+  - Instalação: installation.md
+  - Configuração: configuration.md
+  - Arquitetura: architecture.md
+  - Diagrama ER: er-diagram.md
+  - API: api.md
+  - Deploy: deployment.md
+  - Manual do usuário:
+      - Visão geral: user-guide/overview.md
+      - Autenticação: user-guide/auth.md
+      - Meu Dia: user-guide/dashboard.md
+      - Tarefas: user-guide/tasks.md
+      - Agenda: user-guide/agenda.md
+      - Kanban: user-guide/kanban.md
+      - Projetos, Metas, Categorias e Papéis: user-guide/organization.md
+      - Pomodoro: user-guide/pomodoro.md
+      - Configurações: user-guide/settings.md
+  - Roadmap: roadmap.md

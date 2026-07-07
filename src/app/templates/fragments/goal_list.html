@@ -1,0 +1,56 @@
+<div class="row g-3" id="goal-list-inner">
+{% for g in goals %}
+    <div class="col-md-6 col-lg-4">
+        <div class="triade-card triade-card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <strong><i class="fa-solid fa-bullseye text-primary me-1"></i> {{ g.title }}</strong>
+                <div class="dropdown">
+                    <button class="btn-icon" data-bs-toggle="dropdown"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#edit-goal-{{ g.id }}">Editar</a></li>
+                        <li><a class="dropdown-item text-danger" href="#" hx-delete="/goals/{{ g.id }}" hx-target="#goal-list" hx-swap="innerHTML" data-confirm="Excluir esta meta?">Excluir</a></li>
+                    </ul>
+                </div>
+            </div>
+            {% if g.description %}<p class="text-muted small">{{ g.description }}</p>{% endif %}
+            <div class="progress-track mb-1"><div class="progress-fill" style="width: {{ g.percent_complete }}%"></div></div>
+            <div class="d-flex justify-content-between small text-muted">
+                <span>{{ g.tasks_done }}/{{ g.tasks_total }} tarefas · {{ g.percent_complete }}%</span>
+                {% if g.deadline %}<span><i class="fa-regular fa-calendar"></i> {{ g.deadline.strftime('%d/%m/%Y') }}</span>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="edit-goal-{{ g.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form hx-post="/goals/{{ g.id }}" hx-target="#goal-list" hx-swap="innerHTML">
+                    <div class="modal-header"><h5 class="modal-title">Editar meta</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <div class="mb-3"><label class="form-label">Título</label><input type="text" name="title" class="form-control" value="{{ g.title }}" required></div>
+                        <div class="mb-3"><label class="form-label">Descrição</label><textarea name="description" class="form-control">{{ g.description or '' }}</textarea></div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label">Projeto</label>
+                                <select name="project_id" class="form-select">
+                                    <option value="">—</option>
+                                    {% for p in projects %}<option value="{{ p.id }}" {{ 'selected' if g.project_id == p.id }}>{{ p.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-3"><label class="form-label">Prazo</label><input type="date" name="deadline" class="form-control" value="{{ g.deadline.isoformat() if g.deadline else '' }}"></div>
+                            <div class="col-3"><label class="form-label">%</label><input type="number" name="percent_complete" class="form-control" min="0" max="100" value="{{ g.percent_complete }}"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <p class="text-muted">Nenhuma meta cadastrada ainda.</p>
+{% endfor %}
+</div>

@@ -1,0 +1,124 @@
+<div class="triade-card mb-3">
+    <div class="triade-card-body">
+        <form hx-post="{{ '/tasks/' ~ task.id if task else '/tasks' }}"
+              hx-target="#task-list" hx-swap="innerHTML"
+              hx-on::config-request="event.detail.parameters.description = document.getElementById('task-description-editor').innerHTML">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">{{ 'Editar tarefa' if task else 'Nova tarefa' }}</h5>
+                <button type="button" class="btn-close" aria-label="Fechar"
+                        onclick="document.getElementById('task-form-container').innerHTML=''"></button>
+            </div>
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="status_filter" value="{{ status_filter or 'pending' }}">
+
+            <div class="mb-3">
+                <label class="form-label">Título</label>
+                <input type="text" name="title" class="form-control" required value="{{ task.title if task else '' }}">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Descrição</label>
+                <div class="rich-toolbar btn-group btn-group-sm mb-1">
+                    <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="document.execCommand('bold')"><i class="fa-solid fa-bold"></i></button>
+                    <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="document.execCommand('italic')"><i class="fa-solid fa-italic"></i></button>
+                    <button type="button" class="btn btn-outline-secondary" onmousedown="event.preventDefault()" onclick="document.execCommand('insertUnorderedList')"><i class="fa-solid fa-list-ul"></i></button>
+                </div>
+                <div id="task-description-editor" class="form-control" contenteditable="true" style="min-height:100px">{{ task.description | safe if task and task.description else '' }}</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Observações</label>
+                <textarea name="notes" class="form-control" rows="2">{{ task.notes if task else '' }}</textarea>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-4">
+                    <label class="form-label">Data</label>
+                    <input type="date" name="date_" class="form-control" value="{{ task.date.isoformat() if task and task.date else '' }}">
+                </div>
+                <div class="col-4">
+                    <label class="form-label">Horário</label>
+                    <input type="time" name="time_" class="form-control" value="{{ task.time.strftime('%H:%M') if task and task.time else '' }}">
+                </div>
+                <div class="col-4">
+                    <label class="form-label">Duração prevista (min)</label>
+                    <input type="number" name="planned_duration_minutes" class="form-control" min="0" value="{{ task.planned_duration_minutes if task and task.planned_duration_minutes else '' }}">
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Prioridade</label>
+                    <select name="priority" class="form-select">
+                        {% for p in priorities %}
+                        <option value="{{ p.value }}" {{ 'selected' if task and task.priority.value == p.value }}>{{ p.value | title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Categoria</label>
+                    <select name="category_id" class="form-select">
+                        <option value="">—</option>
+                        {% for c in categories %}
+                        <option value="{{ c.id }}" {{ 'selected' if task and task.category_id == c.id }}>{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Projeto</label>
+                    <select name="project_id" class="form-select">
+                        <option value="">—</option>
+                        {% for p in projects %}
+                        <option value="{{ p.id }}" {{ 'selected' if task and task.project_id == p.id }}>{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Papel</label>
+                    <select name="role_id" class="form-select">
+                        <option value="">—</option>
+                        {% for r in roles %}
+                        <option value="{{ r.id }}" {{ 'selected' if task and task.role_id == r.id }}>{{ r.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="form-label">Meta</label>
+                    <select name="goal_id" class="form-select">
+                        <option value="">—</option>
+                        {% for g in goals %}
+                        <option value="{{ g.id }}" {{ 'selected' if task and task.goal_id == g.id }}>{{ g.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-3">
+                    <label class="form-label">Cor</label>
+                    <input type="color" name="color" class="form-control form-control-color" value="{{ task.color if task and task.color else '#6366f1' }}">
+                </div>
+                <div class="col-3">
+                    <label class="form-label">Localização</label>
+                    <input type="text" name="location" class="form-control" value="{{ task.location if task and task.location else '' }}">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Etiquetas</label>
+                <select name="tag_ids" class="form-select" multiple>
+                    {% for t in tags %}
+                    <option value="{{ t.id }}" {{ 'selected' if task and t.id in task.tags | map(attribute='id') | list }}>{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-outline-secondary"
+                        onclick="document.getElementById('task-form-container').innerHTML=''">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>

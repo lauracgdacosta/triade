@@ -1,0 +1,397 @@
+/* Layout geral inspirado em Notion/ClickUp/TickTick — identidade visual própria. */
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* ---------- Modais ---------- */
+/* Reforça, para todo modal (não só os que têm .modal-dialog-scrollable):
+   nenhum modal ultrapassa a altura da viewport e o corpo rola internamente
+   quando o formulário é mais alto que a tela. Mesma técnica do Bootstrap
+   (.modal-dialog-scrollable), aplicada globalmente e com !important para
+   vencer a regra ".modal-dialog-scrollable .modal-content" do próprio
+   Bootstrap (que tem especificidade maior: duas classes vs. uma).
+   Usa a variável --bs-modal-margin do Bootstrap para acompanhar a margem
+   responsiva dele (1.75rem em telas grandes, 0.5rem em telas pequenas). */
+.modal-dialog {
+    max-height: calc(100vh - (var(--bs-modal-margin, 1.75rem) * 2)) !important;
+}
+.modal-content {
+    max-height: calc(100vh - (var(--bs-modal-margin, 1.75rem) * 2)) !important;
+    overflow: hidden !important;
+}
+.modal-body {
+    overflow-y: auto !important;
+}
+
+/* ---------- Seletor de ícones (Categorias/Papéis) ---------- */
+.icon-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+    gap: 6px;
+}
+.icon-picker-option {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--triade-border);
+    border-radius: 8px;
+    background: var(--triade-surface);
+    color: var(--triade-text-muted);
+    font-size: 1rem;
+}
+.icon-picker-option:hover { background: var(--triade-surface-alt); }
+.icon-picker-option.active {
+    background: var(--triade-primary-soft);
+    border-color: var(--triade-primary);
+    color: var(--triade-primary);
+}
+
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ---------- Sidebar ---------- */
+.app-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--triade-surface);
+    border-right: 1px solid var(--triade-border);
+    display: flex;
+    flex-direction: column;
+    padding: 16px 12px;
+    transition: width .2s ease;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.sidebar-collapsed .app-sidebar { width: 72px; }
+.sidebar-collapsed .nav-text,
+.sidebar-collapsed .brand-text,
+.sidebar-collapsed .badge-soon { display: none; }
+.sidebar-collapsed .btn-collapse i { transform: rotate(180deg); }
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px 20px;
+    font-weight: 700;
+    font-size: 1.15rem;
+}
+.brand-icon { color: var(--triade-primary); font-size: 1.3rem; }
+.btn-collapse {
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    color: var(--triade-text-muted);
+    padding: 4px 8px;
+    border-radius: 8px;
+}
+.btn-collapse:hover { background: var(--triade-surface-alt); }
+.btn-collapse i { transition: transform .2s ease; }
+
+.sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.sidebar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: var(--triade-text);
+    font-size: .92rem;
+    white-space: nowrap;
+}
+.sidebar-nav .nav-link i { width: 18px; text-align: center; color: var(--triade-text-muted); }
+.sidebar-nav .nav-link:hover { background: var(--triade-surface-alt); }
+.sidebar-nav .nav-link.active { background: var(--triade-primary-soft); color: var(--triade-primary); font-weight: 600; }
+.sidebar-nav .nav-link.active i { color: var(--triade-primary); }
+.sidebar-nav .nav-link.disabled { opacity: .5; cursor: default; }
+.nav-section-title {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--triade-text-muted);
+    padding: 16px 12px 4px;
+}
+.badge-soon {
+    margin-left: auto;
+    font-size: .65rem;
+    background: var(--triade-surface-alt);
+    color: var(--triade-text-muted);
+    padding: 2px 6px;
+    border-radius: 999px;
+}
+.mt-auto { margin-top: auto; }
+
+/* ---------- Topbar ---------- */
+.app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.app-topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--triade-border);
+    background: var(--triade-surface);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+.btn-mobile-toggle, .btn-icon {
+    border: none;
+    background: transparent;
+    color: var(--triade-text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+}
+.btn-mobile-toggle:hover, .btn-icon:hover { background: var(--triade-surface-alt); }
+.topbar-search {
+    flex: 1;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--triade-surface-alt);
+    border-radius: 999px;
+    padding: 7px 14px;
+    color: var(--triade-text-muted);
+}
+.topbar-search input {
+    border: none;
+    background: transparent;
+    outline: none;
+    flex: 1;
+    color: var(--triade-text);
+    font-size: .9rem;
+}
+.topbar-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.btn-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: transparent;
+    padding: 4px 8px;
+    border-radius: 999px;
+}
+.btn-user:hover { background: var(--triade-surface-alt); }
+.user-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--triade-primary);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: .85rem;
+}
+.user-name { font-size: .88rem; font-weight: 500; }
+
+.app-content { padding: 24px; flex: 1; }
+
+/* ---------- Cards / componentes comuns ---------- */
+.triade-card {
+    background: var(--triade-surface);
+    border: 1px solid var(--triade-border);
+    border-radius: var(--triade-radius);
+    box-shadow: var(--triade-shadow);
+}
+.triade-card-body { padding: 20px; }
+
+.stat-tile {
+    background: var(--triade-surface);
+    border: 1px solid var(--triade-border);
+    border-radius: var(--triade-radius);
+    padding: 18px 20px;
+    box-shadow: var(--triade-shadow);
+}
+.stat-tile .stat-label { font-size: .8rem; color: var(--triade-text-muted); margin-bottom: 6px; }
+.stat-tile .stat-value { font-size: 1.6rem; font-weight: 700; }
+
+.progress-track {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--triade-surface-alt);
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--triade-primary), #22c55e);
+    border-radius: 999px;
+    transition: width .4s ease;
+}
+
+.task-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--triade-border);
+    border-radius: 10px;
+    background: var(--triade-surface);
+    margin-bottom: 8px;
+    box-shadow: var(--triade-shadow);
+}
+.task-row:hover { box-shadow: var(--triade-shadow-lg); }
+.task-row.is-done { opacity: .6; }
+.task-row.is-done .task-title { text-decoration: line-through; }
+.task-check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--triade-border);
+    background: transparent;
+    flex-shrink: 0;
+}
+.task-check.checked { background: var(--triade-success); border-color: var(--triade-success); color: #fff; }
+.task-title { font-weight: 500; }
+.task-meta { font-size: .78rem; color: var(--triade-text-muted); display: flex; gap: 10px; flex-wrap: wrap; }
+.priority-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.priority-important { background: var(--triade-danger); }
+.priority-urgent { background: var(--triade-warning); }
+.priority-circumstantial { background: var(--triade-primary); }
+.priority-none { background: var(--triade-border); }
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .72rem;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--triade-surface-alt);
+    color: var(--triade-text-muted);
+}
+
+/* ---------- Kanban ---------- */
+.kanban-board { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 12px; align-items: flex-start; }
+.kanban-column {
+    background: var(--triade-surface-alt);
+    border-radius: var(--triade-radius);
+    width: 280px;
+    flex-shrink: 0;
+    padding: 12px;
+}
+.kanban-column-header { display: flex; align-items: center; gap: 8px; padding: 4px 6px 12px; font-weight: 600; }
+.kanban-column-dot { width: 10px; height: 10px; border-radius: 50%; }
+.kanban-card {
+    background: var(--triade-surface);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+    box-shadow: var(--triade-shadow);
+    cursor: grab;
+    border: 1px solid var(--triade-border);
+}
+.kanban-card.dragging { opacity: .4; }
+.kanban-column.drag-over { outline: 2px dashed var(--triade-primary); outline-offset: 4px; }
+
+/* ---------- Notificações (dropdown do topbar) ---------- */
+.notif-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--triade-danger);
+    color: #fff;
+    font-size: .65rem;
+    line-height: 16px;
+    text-align: center;
+}
+.notifications-dropdown { width: 340px; max-height: 420px; overflow-y: auto; padding: 0; }
+.notifications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--triade-border);
+}
+.notification-item { padding: 10px 14px; border-bottom: 1px solid var(--triade-border); cursor: default; }
+.notification-item.unread { background: var(--triade-primary-soft); cursor: pointer; }
+.notification-title { font-size: .85rem; font-weight: 500; }
+.notification-message { font-size: .78rem; color: var(--triade-text-muted); }
+.notification-time { font-size: .7rem; color: var(--triade-text-muted); margin-top: 2px; }
+
+/* ---------- Notas (painel lateral) ---------- */
+.notes-panel-body { display: flex; height: 100%; }
+.notes-list {
+    width: 160px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--triade-border);
+    padding: 8px;
+}
+.notes-list-item {
+    display: block;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: .85rem;
+    color: var(--triade-text);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.notes-list-item:hover { background: var(--triade-surface-alt); }
+.notes-list-item.active { background: var(--triade-primary-soft); color: var(--triade-primary); }
+.notes-editor { flex: 1; min-width: 0; padding: 12px; overflow-y: auto; }
+.notes-textarea { resize: vertical; font-family: inherit; }
+
+/* ---------- Auth pages ---------- */
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--triade-primary-soft), var(--triade-bg));
+}
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--triade-surface);
+    border-radius: 16px;
+    box-shadow: var(--triade-shadow-lg);
+    padding: 36px 32px;
+}
+.auth-card h1 { font-size: 1.4rem; margin-bottom: 4px; }
+.auth-card .subtitle { color: var(--triade-text-muted); font-size: .9rem; margin-bottom: 24px; }
+
+/* ---------- Pomodoro ---------- */
+.pomodoro-ring {
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: conic-gradient(var(--triade-primary) calc(var(--progress, 0) * 1%), var(--triade-surface-alt) 0);
+    margin: 0 auto;
+}
+.pomodoro-ring-inner {
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: var(--triade-surface);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.pomodoro-time { font-size: 2.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 992px) {
+    .app-sidebar {
+        position: fixed;
+        z-index: 40;
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+    }
+    .app-sidebar.mobile-open { transform: translateX(0); }
+    [x-cloak] { display: none !important; }
+    .app-shell.sidebar-collapsed .app-sidebar { width: 240px; }
+}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Relatórios{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h2 class="mb-0">Relatórios</h2>
+    <div class="d-flex gap-2 align-items-end">
+        <div>
+            <label class="form-label small mb-0">De</label>
+            <input type="date" id="report-date-from" class="form-control form-control-sm">
+        </div>
+        <div>
+            <label class="form-label small mb-0">Até</label>
+            <input type="date" id="report-date-to" class="form-control form-control-sm">
+        </div>
+        <button class="btn btn-sm btn-primary" id="report-refresh" type="button">Atualizar</button>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="triade-card triade-card-body text-center">
+            <div class="fs-4 fw-bold" id="stat-streak">–</div>
+            <div class="small text-muted">dias consecutivos produtivos</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="triade-card triade-card-body text-center">
+            <div class="fs-4 fw-bold" id="stat-completion">–</div>
+            <div class="small text-muted">taxa de conclusão</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="triade-card triade-card-body text-center">
+            <div class="fs-4 fw-bold" id="stat-lost">–</div>
+            <div class="small text-muted">min. perdidos (canceladas)</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="triade-card triade-card-body text-center">
+            <div class="fs-4 fw-bold" id="stat-overdue">–</div>
+            <div class="small text-muted">tarefas atrasadas</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="triade-card triade-card-body">
+            <h6>Tempo por projeto</h6>
+            <canvas id="chart-project"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="triade-card triade-card-body">
+            <h6>Tempo por categoria</h6>
+            <canvas id="chart-category"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="triade-card triade-card-body">
+            <h6>Tempo por papel</h6>
+            <canvas id="chart-role"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="triade-card triade-card-body">
+            <h6>Tempo por semana (últimas 8)</h6>
+            <canvas id="chart-week"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="triade-card triade-card-body mt-3">
+    <h6>Eficiência (planejado × realizado)</h6>
+    <p class="mb-0">
+        <span id="eff-completed">–</span> tarefas concluídas ·
+        planejado <span id="eff-planned">–</span> min · realizado <span id="eff-actual">–</span> min ·
+        eficiência <span id="eff-percent">–</span>% · média <span id="eff-avg">–</span> min/tarefa
+    </p>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="/static/js/reports.js"></script>
+{% endblock %}

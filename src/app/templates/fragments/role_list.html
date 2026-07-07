@@ -1,0 +1,40 @@
+{% from "macros/icon_picker.html" import icon_picker %}
+<div class="row g-3" id="role-list-inner">
+{% for r in roles %}
+    <div class="col-md-4 col-lg-3">
+        <div class="triade-card triade-card-body d-flex align-items-center gap-3">
+            <span class="user-avatar" style="background: {{ r.color }}"><i class="{{ r.icon }}"></i></span>
+            <div class="flex-grow-1"><div class="fw-semibold">{{ r.name }}</div></div>
+            <div class="dropdown">
+                <button class="btn-icon" data-bs-toggle="dropdown"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#edit-role-{{ r.id }}">Editar</a></li>
+                    <li><a class="dropdown-item text-danger" href="#" hx-delete="/roles/{{ r.id }}" hx-target="#role-list" hx-swap="innerHTML" data-confirm="Excluir este papel?">Excluir</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="edit-role-{{ r.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form hx-post="/roles/{{ r.id }}" hx-target="#role-list" hx-swap="innerHTML">
+                    <div class="modal-header"><h5 class="modal-title">Editar papel</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <div class="mb-3"><label class="form-label">Nome</label><input type="text" name="name" class="form-control" value="{{ r.name }}" required></div>
+                        {{ icon_picker('icon', r.icon, 'edit-role-' ~ r.id) }}
+                        <div class="mb-3"><label class="form-label">Cor</label><input type="color" name="color" class="form-control form-control-color" value="{{ r.color }}"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <p class="text-muted">Nenhum papel cadastrado ainda.</p>
+{% endfor %}
+</div>

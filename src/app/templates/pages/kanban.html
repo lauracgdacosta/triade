@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Kanban{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Kanban</h2>
+    <span class="text-muted small">Arraste os cartões entre as colunas</span>
+</div>
+
+<div class="kanban-board" id="kanban-board"
+     data-supabase-url="{{ supabase_url }}" data-supabase-anon-key="{{ supabase_anon_key }}"
+     data-user-id="{{ user.id }}">
+    {% for column in board.columns %}
+    <div class="kanban-column" data-column-id="{{ column.id }}">
+        <div class="kanban-column-header">
+            <span class="kanban-column-dot" style="background: {{ column.color }}"></span>
+            {{ column.name }}
+            <span class="text-muted small ms-1">{{ tasks_by_column.get(column.id, []) | length }}</span>
+        </div>
+        <div class="kanban-cards" data-column-id="{{ column.id }}">
+            {% for task in tasks_by_column.get(column.id, []) %}
+            <div class="kanban-card" draggable="true" data-task-id="{{ task.id }}">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="priority-dot priority-{{ task.priority.value }}"></span>
+                    <strong class="small">{{ task.title }}</strong>
+                </div>
+                {% if task.date %}<div class="text-muted" style="font-size:.75rem"><i class="fa-regular fa-calendar"></i> {{ task.date.strftime('%d/%m') }}</div>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/static/js/kanban.js"></script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% if unread_count > 0 %}
+<span id="notif-badge" class="notif-badge" hx-swap-oob="true">{{ unread_count }}</span>
+{% else %}
+<span id="notif-badge" class="notif-badge d-none" hx-swap-oob="true"></span>
+{% endif %}
+
+<div class="notifications-header">
+    <strong>Notificações</strong>
+    {% if unread_count > 0 %}
+    <a href="#" class="small" hx-post="/notifications/read-all" hx-target="#notifications-panel" hx-swap="innerHTML">
+        Marcar todas como lidas
+    </a>
+    {% endif %}
+</div>
+<div class="notifications-list">
+    {% for n in notifications %}
+    <div class="notification-item {{ 'unread' if not n.read }}"
+         {% if not n.read %}hx-post="/notifications/{{ n.id }}/read" hx-target="#notifications-panel" hx-swap="innerHTML"{% endif %}>
+        <div class="notification-title">{{ n.title }}</div>
+        {% if n.message %}<div class="notification-message">{{ n.message }}</div>{% endif %}
+        <div class="notification-time">{{ n.created_at.strftime('%d/%m %H:%M') }}</div>
+    </div>
+    {% else %}
+    <p class="text-muted small p-3 mb-0">Nenhuma notificação.</p>
+    {% endfor %}
+</div>

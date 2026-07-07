@@ -1,0 +1,36 @@
+<div id="notes-panel-body" class="notes-panel-body">
+    <div class="notes-list">
+        {% for note in notes %}
+        <a href="#" class="notes-list-item {{ 'active' if selected and note.id == selected.id }}"
+           hx-get="/notes/panel/select/{{ note.id }}" hx-target="#notes-panel-body" hx-swap="outerHTML">
+            {{ note.title or 'Sem título' }}
+        </a>
+        {% else %}
+        <p class="text-muted small p-2">Nenhuma nota ainda.</p>
+        {% endfor %}
+    </div>
+
+    <div class="notes-editor">
+        {% if selected %}
+        <form>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="text" name="title" class="form-control form-control-sm mb-2" placeholder="Título"
+                   value="{{ selected.title or '' }}"
+                   hx-patch="/notes/panel/{{ selected.id }}" hx-include="closest form"
+                   hx-trigger="input changed delay:800ms" hx-target="#notes-panel-body" hx-swap="outerHTML">
+            <textarea name="content_markdown" class="form-control notes-textarea" rows="16"
+                      placeholder="Escreva em Markdown..."
+                      hx-patch="/notes/panel/{{ selected.id }}" hx-include="closest form"
+                      hx-trigger="input changed delay:800ms" hx-target="#notes-panel-body" hx-swap="outerHTML"
+                      >{{ selected.content_markdown }}</textarea>
+        </form>
+        <button type="button" class="btn btn-sm btn-outline-danger mt-2"
+                hx-delete="/notes/panel/{{ selected.id }}" hx-target="#notes-panel-body" hx-swap="outerHTML"
+                data-confirm="Excluir esta nota permanentemente?">
+            <i class="fa-solid fa-trash me-1"></i>Excluir
+        </button>
+        {% else %}
+        <p class="text-muted p-2">Selecione uma nota ou crie uma nova.</p>
+        {% endif %}
+    </div>
+</div>

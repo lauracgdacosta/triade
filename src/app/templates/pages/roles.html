@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "macros/icon_picker.html" import icon_picker %}
+{% block title %}Papéis{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Papéis</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#new-role-modal">
+        <i class="fa-solid fa-plus me-1"></i> Novo papel
+    </button>
+</div>
+
+<div id="role-list">
+    {% include "fragments/role_list.html" %}
+</div>
+
+<div class="modal fade" id="new-role-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form hx-post="/roles" hx-target="#role-list" hx-swap="innerHTML">
+                <div class="modal-header"><h5 class="modal-title">Novo papel</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="mb-3"><label class="form-label">Nome</label><input type="text" name="name" class="form-control" placeholder="Trabalho, Estudos, Família..." required></div>
+                    {{ icon_picker('icon', 'fa-solid fa-briefcase', 'new-role') }}
+                    <div class="mb-3"><label class="form-label">Cor</label><input type="color" name="color" class="form-control form-control-color" value="#6366f1"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Criar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

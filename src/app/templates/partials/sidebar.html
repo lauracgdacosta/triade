@@ -1,0 +1,51 @@
+<aside class="app-sidebar" :class="{ 'mobile-open': sidebarOpen }">
+    <div class="sidebar-brand">
+        <i class="fa-solid fa-diagram-project brand-icon"></i>
+        <span class="brand-text">Tríade</span>
+        <button class="btn-collapse d-none d-lg-inline-flex" type="button"
+                @click="sidebarCollapsed = !sidebarCollapsed; localStorage.setItem('triade-sidebar-collapsed', sidebarCollapsed ? '1' : '0')">
+            <i class="fa-solid fa-angles-left"></i>
+        </button>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-link {{ 'active' if active_path == '/dashboard' }}">
+            <i class="fa-solid fa-sun"></i><span class="nav-text">{{ t('nav.dashboard', user_settings.language) }}</span>
+        </a>
+        <a href="/tasks" class="nav-link {{ 'active' if active_path == '/tasks' }}">
+            <i class="fa-solid fa-list-check"></i><span class="nav-text">{{ t('nav.tasks', user_settings.language) }}</span>
+        </a>
+        <a href="/agenda" class="nav-link {{ 'active' if active_path == '/agenda' }}">
+            <i class="fa-solid fa-calendar-days"></i><span class="nav-text">{{ t('nav.agenda', user_settings.language) }}</span>
+        </a>
+        <a href="/kanban" class="nav-link {{ 'active' if active_path == '/kanban' }}">
+            <i class="fa-solid fa-table-columns"></i><span class="nav-text">{{ t('nav.kanban', user_settings.language) }}</span>
+        </a>
+        <a href="/pomodoro" class="nav-link {{ 'active' if active_path == '/pomodoro' }}">
+            <i class="fa-solid fa-stopwatch"></i><span class="nav-text">{{ t('nav.pomodoro', user_settings.language) }}</span>
+        </a>
+
+        <div class="nav-section-title"><span class="nav-text">{{ t('nav.section.organization', user_settings.language) }}</span></div>
+        <a href="/projects" class="nav-link {{ 'active' if active_path == '/projects' }}">
+            <i class="fa-solid fa-folder-open"></i><span class="nav-text">{{ t('nav.projects', user_settings.language) }}</span>
+        </a>
+        <a href="/goals" class="nav-link {{ 'active' if active_path == '/goals' }}">
+            <i class="fa-solid fa-bullseye"></i><span class="nav-text">{{ t('nav.goals', user_settings.language) }}</span>
+        </a>
+        <a href="/categories" class="nav-link {{ 'active' if active_path == '/categories' }}">
+            <i class="fa-solid fa-tags"></i><span class="nav-text">{{ t('nav.categories', user_settings.language) }}</span>
+        </a>
+        <a href="/roles" class="nav-link {{ 'active' if active_path == '/roles' }}">
+            <i class="fa-solid fa-user-tag"></i><span class="nav-text">{{ t('nav.roles', user_settings.language) }}</span>
+        </a>
+
+        <div class="nav-section-title"><span class="nav-text">{{ t('nav.section.analysis', user_settings.language) }}</span></div>
+        <a href="/reports" class="nav-link {{ 'active' if active_path == '/reports' }}">
+            <i class="fa-solid fa-chart-column"></i><span class="nav-text">{{ t('nav.reports', user_settings.language) }}</span>
+        </a>
+
+        <a href="/settings" class="nav-link mt-auto {{ 'active' if active_path == '/settings' }}">
+            <i class="fa-solid fa-gear"></i><span class="nav-text">{{ t('nav.settings', user_settings.language) }}</span>
+        </a>
+    </nav>
+</aside>

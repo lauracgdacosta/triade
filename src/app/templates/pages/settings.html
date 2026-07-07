@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Configurações{% endblock %}
+{% block content %}
+<div class="mx-auto" style="max-width: 560px">
+    <h2 class="mb-4">Configurações</h2>
+
+    {% if saved %}<div class="alert alert-success py-2">Preferências salvas com sucesso.</div>{% endif %}
+
+    <form method="post" action="/settings" class="triade-card triade-card-body">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="mb-3">
+            <label class="form-label">Tema</label>
+            <select name="theme" class="form-select" id="settings-theme-select">
+                <option value="light" {{ 'selected' if user_settings.theme.value == 'light' }}>Claro</option>
+                <option value="dark" {{ 'selected' if user_settings.theme.value == 'dark' }}>Escuro</option>
+                <option value="auto" {{ 'selected' if user_settings.theme.value == 'auto' }}>Automático</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Idioma</label>
+            <select name="language" class="form-select">
+                <option value="pt-BR" {{ 'selected' if user_settings.language == 'pt-BR' }}>Português (Brasil)</option>
+                <option value="en-US" {{ 'selected' if user_settings.language == 'en-US' }}>English (US)</option>
+                <option value="es-ES" {{ 'selected' if user_settings.language == 'es-ES' }}>Español</option>
+            </select>
+        </div>
+
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" role="switch" name="time_format_24h" value="true" {{ 'checked' if user_settings.time_format_24h }}>
+            <label class="form-check-label">Formato 24 horas</label>
+        </div>
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" role="switch" name="week_start_monday" value="true" {{ 'checked' if user_settings.week_start_monday }}>
+            <label class="form-check-label">Semana começa na segunda-feira</label>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Duração padrão de tarefa (min)</label>
+            <input type="number" name="default_task_duration_minutes" class="form-control" value="{{ user_settings.default_task_duration_minutes }}" min="1" max="600">
+        </div>
+
+        <hr>
+        <h6 class="mb-3">Pomodoro padrão</h6>
+        <div class="row g-2 mb-3">
+            <div class="col-6">
+                <label class="form-label">Foco (min)</label>
+                <input type="number" name="pomodoro_work_minutes" class="form-control" value="{{ user_settings.pomodoro_work_minutes }}" min="1" max="180">
+            </div>
+            <div class="col-6">
+                <label class="form-label">Pausa (min)</label>
+                <input type="number" name="pomodoro_break_minutes" class="form-control" value="{{ user_settings.pomodoro_break_minutes }}" min="1" max="60">
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Salvar</button>
+    </form>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    document.getElementById("settings-theme-select").addEventListener("change", (e) => {
+        window.triadeTheme.set(e.target.value);
+    });
+</script>
+{% endblock %}

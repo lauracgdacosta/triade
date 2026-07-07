@@ -1,0 +1,63 @@
+{% if close_form %}<div id="task-form-container" hx-swap-oob="true"></div>{% endif %}
+<div id="task-list-inner">
+{% if tasks %}
+    {% for task in tasks %}
+    <div class="task-row {{ 'is-done' if task.status.value == 'done' }}">
+        {% if task.status.value == 'done' %}
+        <button class="task-check checked" title="Reabrir"
+                hx-post="/tasks/{{ task.id }}/reopen" hx-target="#task-list" hx-swap="innerHTML"
+                hx-vals='{"status_filter": "{{ status_filter }}"}'>
+            <i class="fa-solid fa-check"></i>
+        </button>
+        {% else %}
+        <button class="task-check" title="Concluir"
+                hx-post="/tasks/{{ task.id }}/complete" hx-target="#task-list" hx-swap="innerHTML"
+                hx-vals='{"status_filter": "{{ status_filter }}"}'></button>
+        {% endif %}
+
+        <div class="flex-grow-1" hx-get="/tasks/{{ task.id }}/edit" hx-target="#task-form-container" hx-swap="innerHTML" style="cursor:pointer">
+            <div class="task-title">{{ task.title }}</div>
+            <div class="task-meta">
+                <span class="priority-dot priority-{{ task.priority.value }}"></span>
+                {% if task.date %}<span><i class="fa-regular fa-calendar"></i> {{ task.date.strftime('%d/%m') }}</span>{% endif %}
+                {% if task.time %}<span><i class="fa-regular fa-clock"></i> {{ task.time.strftime('%H:%M') }}</span>{% endif %}
+                {% if task.planned_duration_minutes %}<span>{{ task.planned_duration_minutes }} min</span>{% endif %}
+                {% for tag in task.tags %}<span class="chip">{{ tag.name }}</span>{% endfor %}
+            </div>
+        </div>
+
+        <div class="dropdown">
+            <button class="btn-icon" data-bs-toggle="dropdown"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" hx-get="/tasks/{{ task.id }}/edit" hx-target="#task-form-container" hx-swap="innerHTML" href="#"><i class="fa-solid fa-pen me-2"></i>Editar</a></li>
+                <li>
+                    <a class="dropdown-item" href="#" hx-post="/tasks/{{ task.id }}/duplicate" hx-target="#task-list" hx-swap="innerHTML"
+                       hx-vals='{"status_filter": "{{ status_filter }}"}'><i class="fa-solid fa-copy me-2"></i>Duplicar</a>
+                </li>
+                {% if task.status.value not in ['done', 'cancelled'] %}
+                <li>
+                    <a class="dropdown-item" href="#" hx-post="/tasks/{{ task.id }}/cancel" hx-target="#task-list" hx-swap="innerHTML"
+                       hx-vals='{"status_filter": "{{ status_filter }}"}'><i class="fa-solid fa-ban me-2"></i>Cancelar</a>
+                </li>
+                {% endif %}
+                {% if task.status.value != 'archived' %}
+                <li>
+                    <a class="dropdown-item" href="#" hx-post="/tasks/{{ task.id }}/archive" hx-target="#task-list" hx-swap="innerHTML"
+                       hx-vals='{"status_filter": "{{ status_filter }}"}'><i class="fa-solid fa-box-archive me-2"></i>Arquivar</a>
+                </li>
+                {% endif %}
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item text-danger" href="#" hx-delete="/tasks/{{ task.id }}?status_filter={{ status_filter }}"
+                       hx-target="#task-list" hx-swap="innerHTML" data-confirm="Excluir esta tarefa permanentemente?">
+                        <i class="fa-solid fa-trash me-2"></i>Excluir
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <p class="text-muted">Nenhuma tarefa aqui.</p>
+{% endif %}
+</div>

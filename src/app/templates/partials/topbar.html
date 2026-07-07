@@ -1,0 +1,49 @@
+<header class="app-topbar">
+    <button class="btn-mobile-toggle d-lg-none" type="button" @click="sidebarOpen = !sidebarOpen">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <form class="topbar-search" action="/search" method="get">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="q" placeholder="{{ t('topbar.search_placeholder', user_settings.language) }}" value="{{ q or '' }}">
+    </form>
+
+    <div class="topbar-actions">
+        <button class="btn-icon" type="button" id="theme-toggle" title="Alternar tema">
+            <i class="fa-solid fa-circle-half-stroke"></i>
+        </button>
+
+        <div class="dropdown">
+            <button class="btn-icon position-relative" type="button" title="{{ t('topbar.notifications', user_settings.language) }}" data-bs-toggle="dropdown"
+                    hx-get="/notifications/panel" hx-target="#notifications-panel" hx-swap="innerHTML"
+                    hx-trigger="load, every 60s, click">
+                <i class="fa-regular fa-bell"></i>
+                <span id="notif-badge" class="notif-badge d-none"></span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end notifications-dropdown" id="notifications-panel">
+                <p class="text-muted small p-3 mb-0">Carregando...</p>
+            </div>
+        </div>
+
+        <button class="btn-icon" type="button" title="{{ t('topbar.notes', user_settings.language) }}"
+                hx-get="/notes/panel" hx-target="#notes-panel-container" hx-swap="innerHTML">
+            <i class="fa-regular fa-note-sticky"></i>
+        </button>
+
+        <div class="dropdown">
+            <button class="btn-user" type="button" data-bs-toggle="dropdown">
+                <span class="user-avatar">{{ (user.display_name or user.email)[0] | upper }}</span>
+                <span class="user-name d-none d-md-inline">{{ user.display_name or user.email }}</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/settings"><i class="fa-solid fa-gear me-2"></i>{{ t('nav.settings', user_settings.language) }}</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form action="/logout" method="post">
+                        <button class="dropdown-item" type="submit"><i class="fa-solid fa-right-from-bracket me-2"></i>{{ t('topbar.logout', user_settings.language) }}</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>

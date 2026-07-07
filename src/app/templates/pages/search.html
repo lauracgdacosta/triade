@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Busca{% endblock %}
+{% block content %}
+<h2 class="mb-3">Busca global</h2>
+
+<form method="get" action="/search" class="triade-card triade-card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Termo</label>
+            <input type="search" name="q" class="form-control" value="{{ q }}" placeholder="Buscar em tarefas, projetos, metas e eventos...">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Categoria</label>
+            <select name="category_id" class="form-select">
+                <option value="">Todas</option>
+                {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if category_id == c.id }}>{{ c.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Projeto</label>
+            <select name="project_id" class="form-select">
+                <option value="">Todos</option>
+                {% for p in projects %}<option value="{{ p.id }}" {{ 'selected' if project_id == p.id }}>{{ p.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Papel</label>
+            <select name="role_id" class="form-select">
+                <option value="">Todos</option>
+                {% for r in roles %}<option value="{{ r.id }}" {{ 'selected' if role_id == r.id }}>{{ r.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Prioridade</label>
+            <select name="priority" class="form-select">
+                <option value="">Todas</option>
+                {% for p in priorities %}<option value="{{ p.value }}" {{ 'selected' if priority == p }}>{{ p.value | title }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="row g-2 align-items-end mt-1">
+        <div class="col-md-2">
+            <label class="form-label">Status</label>
+            <select name="status_filter" class="form-select">
+                <option value="">Todos</option>
+                {% for s in statuses %}<option value="{{ s.value }}" {{ 'selected' if status_filter == s }}>{{ t('task_status.' ~ s.value, user_settings.language) }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">De</label>
+            <input type="date" name="date_from" class="form-control" value="{{ date_from.isoformat() if date_from else '' }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Até</label>
+            <input type="date" name="date_to" class="form-control" value="{{ date_to.isoformat() if date_to else '' }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-magnifying-glass me-1"></i>Buscar</button>
+        </div>
+    </div>
+</form>
+
+{% if not q %}
+<p class="text-muted">Digite um termo para buscar em tarefas, projetos, metas e eventos.</p>
+{% elif response.total == 0 %}
+<p class="text-muted">Nenhum resultado para "{{ q }}".</p>
+{% else %}
+<p class="text-muted small">{{ response.total }} resultado(s) para "{{ q }}"</p>
+<div class="d-flex flex-column gap-2">
+    {% for r in response.results %}
+    <a href="{{ r.url }}" class="triade-card triade-card-body d-flex align-items-center gap-3 text-decoration-none text-body">
+        {% if r.entity_type == 'task' %}<i class="fa-solid fa-list-check text-primary"></i>
+        {% elif r.entity_type == 'project' %}<i class="fa-solid fa-diagram-project text-primary"></i>
+        {% elif r.entity_type == 'goal' %}<i class="fa-solid fa-bullseye text-primary"></i>
+        {% else %}<i class="fa-solid fa-calendar-days text-primary"></i>{% endif %}
+        <div>
+            <div class="fw-medium">{{ r.title }}</div>
+            <div class="small text-muted">
+                {{ {'task': 'Tarefa', 'project': 'Projeto', 'goal': 'Meta', 'event': 'Evento'}[r.entity_type] }}
+                {% if r.subtitle %} · {{ r.subtitle }}{% endif %}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

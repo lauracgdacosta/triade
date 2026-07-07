@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Criar conta{% endblock %}
+{% block auth_content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <h1>Criar conta</h1>
+        <p class="subtitle">Comece a organizar seu tempo em minutos.</p>
+
+        {% if error %}<div class="alert alert-danger py-2">{{ error }}</div>{% endif %}
+        {% if success %}<div class="alert alert-success py-2">{{ success }}</div>{% endif %}
+
+        {% if not success %}
+        <form method="post" action="/signup">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="mb-3">
+                <label class="form-label">Nome</label>
+                <input type="text" name="display_name" class="form-control" autofocus>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">E-mail</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Senha</label>
+                <input type="password" name="password" class="form-control" minlength="8" required>
+                <div class="form-text">Mínimo de 8 caracteres.</div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mb-3">Criar conta</button>
+        </form>
+        {% endif %}
+
+        <div class="text-center small">
+            Já tem uma conta? <a href="/login">Entrar</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

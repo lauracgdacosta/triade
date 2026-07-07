@@ -1,0 +1,29 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Postgres local, útil apenas para desenvolvimento offline sem Supabase.
+  # Em produção a persistência é 100% no Supabase (ver .env DATABASE_URL).
+  db:
+    image: postgres:16-alpine
+    profiles: ["local-db"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: triade
+    ports:
+      - "5432:5432"
+    volumes:
+      - triade_db_data:/var/lib/postgresql/data
+
+volumes:
+  triade_db_data:
