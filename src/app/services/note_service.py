@@ -1,5 +1,7 @@
 """Regra de negócio de Notas: CRUD + renderização segura do Markdown para HTML."""
 
+from __future__ import annotations
+
 import uuid
 
 import markdown as markdown_lib
