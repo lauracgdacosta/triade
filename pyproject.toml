@@ -39,3 +39,6 @@ mkdocs-mermaid2-plugin = "^1.1.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.vercel.scripts]
+build = "python scripts/vercel_build.py"
