@@ -1,9 +1,11 @@
-"""Build step do Vercel: espelha src/app/static em public/static.
+"""Espelha src/app/static em public/static para o deploy no Vercel.
 
 Vercel só serve arquivos estáticos que estejam em public/** via CDN (o
-app.mount("/static", ...) do FastAPI é ignorado nesse ambiente) — então essa
-cópia precisa rodar a cada deploy pra manter public/static em dia com o
-static/ real que fica junto do código-fonte.
+app.mount("/static", ...) do FastAPI é ignorado nesse ambiente). O
+pyproject.toml fica fora do bundle enviado ao Vercel (ver .vercelignore,
+necessário porque é formato Poetry e o uv exige uma tabela [project]), então
+o hook [tool.vercel.scripts] não roda automaticamente no build — rode este
+script manualmente e comite public/static sempre que src/app/static mudar.
 """
 
 import shutil

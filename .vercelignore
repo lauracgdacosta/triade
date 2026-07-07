@@ -1,0 +1,17 @@
+# pyproject.toml é formato Poetry ([tool.poetry.dependencies]), sem a tabela
+# [project] (PEP 621) que o instalador do Vercel (uv) exige — a presença do
+# arquivo faz o build falhar em "uv lock" mesmo com requirements.txt presente.
+# Escondendo daqui, o Vercel cai de volta pro requirements.txt.
+pyproject.toml
+poetry.lock
+
+# Não usados pela função em runtime — reduz o bundle enviado.
+tests/
+docs/
+htmlcov/
+alembic/
+scripts/supabase_schema.sql
+mkdocs.yml
+Dockerfile
+docker-compose.yml
+render.yaml
