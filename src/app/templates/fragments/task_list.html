@@ -34,6 +34,12 @@
                     <a class="dropdown-item" href="#" hx-post="/tasks/{{ task.id }}/duplicate" hx-target="#task-list" hx-swap="innerHTML"
                        hx-vals='{"status_filter": "{{ status_filter }}"}'><i class="fa-solid fa-copy me-2"></i>Duplicar</a>
                 </li>
+                {% if task.status.value not in ['done', 'cancelled', 'waiting'] %}
+                <li>
+                    <a class="dropdown-item" href="#" hx-post="/tasks/{{ task.id }}/wait" hx-target="#task-list" hx-swap="innerHTML"
+                       hx-vals='{"status_filter": "{{ status_filter }}"}'><i class="fa-solid fa-hourglass-half me-2"></i>Aguardando</a>
+                </li>
+                {% endif %}
                 {% if task.status.value not in ['done', 'cancelled'] %}
                 <li>
                     <a class="dropdown-item" href="#" hx-post="/tasks/{{ task.id }}/cancel" hx-target="#task-list" hx-swap="innerHTML"

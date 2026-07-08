@@ -74,6 +74,13 @@ async def test_cancel_and_archive(db_session, test_user: User):
     assert archived.status == TaskStatus.ARCHIVED
 
 
+async def test_wait(db_session, test_user: User):
+    service = TaskService(db_session)
+    task = await service.create(test_user.id, TaskCreate(title="Aguardando"))
+    waiting = await service.wait(task)
+    assert waiting.status == TaskStatus.WAITING
+
+
 async def test_duplicate_creates_copy(db_session, test_user: User):
     service = TaskService(db_session)
     task = await service.create(test_user.id, TaskCreate(title="Original", priority=Priority.IMPORTANT))

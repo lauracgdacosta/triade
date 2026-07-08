@@ -213,6 +213,15 @@ async def cancel_task(
     return await _action_and_refresh(request, TaskService(db), user, task_id, "cancel", status_filter)
 
 
+@router.post("/{task_id}/wait", response_class=HTMLResponse)
+async def wait_task(
+    task_id: uuid.UUID, request: Request, status_filter: str = Form("pending"),
+    user: User = Depends(get_current_user_web), db: AsyncSession = Depends(get_db)
+):
+    await verify_csrf(request)
+    return await _action_and_refresh(request, TaskService(db), user, task_id, "wait", status_filter)
+
+
 @router.post("/{task_id}/reopen", response_class=HTMLResponse)
 async def reopen_task(
     task_id: uuid.UUID, request: Request, status_filter: str = Form("pending"),

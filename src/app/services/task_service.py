@@ -111,6 +111,9 @@ class TaskService:
     async def cancel(self, task: Task) -> Task:
         return await self.repo.update(task, status=TaskStatus.CANCELLED)
 
+    async def wait(self, task: Task) -> Task:
+        return await self.repo.update(task, status=TaskStatus.WAITING)
+
     async def reopen(self, task: Task) -> Task:
         return await self.repo.update(task, status=TaskStatus.PENDING, completed_at=None)
 
