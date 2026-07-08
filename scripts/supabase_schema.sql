@@ -203,14 +203,15 @@ CREATE INDEX ix_goals_project_id ON goals (project_id);
 CREATE INDEX ix_goals_user_id ON goals (user_id);
 
 CREATE TABLE kanban_columns (
-    board_id UUID NOT NULL, 
-    name VARCHAR(100) NOT NULL, 
-    color VARCHAR(20) NOT NULL, 
-    position INTEGER NOT NULL, 
-    id UUID NOT NULL, 
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL, 
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL, 
-    PRIMARY KEY (id), 
+    board_id UUID NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    color VARCHAR(20) NOT NULL,
+    position INTEGER NOT NULL,
+    maps_to_status VARCHAR(20),
+    id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+    PRIMARY KEY (id),
     FOREIGN KEY(board_id) REFERENCES kanban_boards (id) ON DELETE CASCADE
 );
 

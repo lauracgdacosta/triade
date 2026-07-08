@@ -74,7 +74,7 @@ async def test_user(db_session: AsyncSession) -> User:
 
     board = KanbanBoard(user_id=user.id, name="Meu Quadro", is_default=True)
     board.columns = [
-        KanbanColumn(name=c["name"], color=c["color"], position=i)
+        KanbanColumn(name=c["name"], color=c["color"], position=i, maps_to_status=c["status"])
         for i, c in enumerate(DEFAULT_KANBAN_COLUMNS)
     ]
     db_session.add(board)

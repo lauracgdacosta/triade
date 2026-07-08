@@ -4,6 +4,7 @@ import pytest
 
 from app.models.enums import Priority, TaskStatus
 from app.models.user import User
+from app.repositories.kanban_repository import KanbanBoardRepository
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.services.task_service import TaskService
 
@@ -79,6 +80,39 @@ async def test_wait(db_session, test_user: User):
     task = await service.create(test_user.id, TaskCreate(title="Aguardando"))
     waiting = await service.wait(task)
     assert waiting.status == TaskStatus.WAITING
+
+
+async def test_status_actions_move_kanban_column(db_session, test_user: User):
+    service = TaskService(db_session)
+    task = await service.create(test_user.id, TaskCreate(title="Sincronizar com o kanban"))
+
+    board = await KanbanBoardRepository(db_session).get_default_for_user(test_user.id)
+    columns_by_name = {c.name: c for c in board.columns}
+
+    started = await service.start(task)
+    assert started.status == TaskStatus.IN_PROGRESS
+    assert started.kanban_column_id == columns_by_name["Em Andamento"].id
+
+    waiting = await service.wait(task)
+    assert waiting.status == TaskStatus.WAITING
+    assert waiting.kanban_column_id == columns_by_name["Aguardando"].id
+
+    completed = await service.complete(task)
+    assert completed.status == TaskStatus.DONE
+    assert completed.kanban_column_id == columns_by_name["Concluído"].id
+    assert completed.completed_at is not None
+
+
+async def test_move_to_kanban_updates_status(db_session, test_user: User):
+    service = TaskService(db_session)
+    task = await service.create(test_user.id, TaskCreate(title="Arrastar no kanban"))
+
+    board = await KanbanBoardRepository(db_session).get_default_for_user(test_user.id)
+    done_column = next(c for c in board.columns if c.name == "Concluído")
+
+    moved = await service.move_to_kanban(task, done_column.id, 0)
+    assert moved.status == TaskStatus.DONE
+    assert moved.completed_at is not None
 
 
 async def test_duplicate_creates_copy(db_session, test_user: User):

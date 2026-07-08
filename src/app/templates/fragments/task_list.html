@@ -3,18 +3,6 @@
 {% if tasks %}
     {% for task in tasks %}
     <div class="task-row {{ 'is-done' if task.status.value == 'done' }}">
-        {% if task.status.value == 'done' %}
-        <button class="task-check checked" title="Reabrir"
-                hx-post="/tasks/{{ task.id }}/reopen" hx-target="#task-list" hx-swap="innerHTML"
-                hx-vals='{"status_filter": "{{ status_filter }}"}'>
-            <i class="fa-solid fa-check"></i>
-        </button>
-        {% else %}
-        <button class="task-check" title="Concluir"
-                hx-post="/tasks/{{ task.id }}/complete" hx-target="#task-list" hx-swap="innerHTML"
-                hx-vals='{"status_filter": "{{ status_filter }}"}'></button>
-        {% endif %}
-
         <div class="flex-grow-1" hx-get="/tasks/{{ task.id }}/edit" hx-target="#task-form-container" hx-swap="innerHTML" style="cursor:pointer">
             <div class="task-title">{{ task.title }}</div>
             <div class="task-meta">
@@ -26,6 +14,24 @@
             </div>
         </div>
 
+        <div class="task-status-actions">
+            {% for value, action, icon, label in [
+                ('done', 'complete', 'fa-check', 'Concluir'),
+                ('in_progress', 'start', 'fa-play', 'Em andamento'),
+                ('waiting', 'wait', 'fa-hourglass-half', 'Aguardando'),
+                ('cancelled', 'cancel', 'fa-ban', 'Cancelada'),
+            ] %}
+            <button type="button" class="status-btn status-{{ value }} {{ 'active' if task.status.value == value }}"
+                    title="{{ label }}"
+                    hx-post="/tasks/{{ task.id }}/{{ 'reopen' if task.status.value == value else action }}"
+                    hx-target="#task-list" hx-swap="innerHTML"
+                    hx-vals='{"status_filter": "{{ status_filter }}"}'>
+                <i class="fa-solid {{ icon }}"></i>
+                <span class="status-btn-label">{{ label }}</span>
+            </button>
+            {% endfor %}
+        </div>
+
         <div class="dropdown">
             <button class="btn-icon" data-bs-toggle="dropdown"><i class="fa-solid fa-ellipsis-vertical"></i></button>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -34,18 +40,6 @@
                     <a class="dropdown-item" href="#" hx-post="/tasks/{{ task.id }}/duplicate" hx-target="#task-list" hx-swap="innerHTML"
                        hx-vals='{"status_filter": "{{ status_filter }}"}'><i class="fa-solid fa-copy me-2"></i>Duplicar</a>
                 </li>
-                {% if task.status.value not in ['done', 'cancelled', 'waiting'] %}
-                <li>
-                    <a class="dropdown-item" href="#" hx-post="/tasks/{{ task.id }}/wait" hx-target="#task-list" hx-swap="innerHTML"
-                       hx-vals='{"status_filter": "{{ status_filter }}"}'><i class="fa-solid fa-hourglass-half me-2"></i>Aguardando</a>
-                </li>
-                {% endif %}
-                {% if task.status.value not in ['done', 'cancelled'] %}
-                <li>
-                    <a class="dropdown-item" href="#" hx-post="/tasks/{{ task.id }}/cancel" hx-target="#task-list" hx-swap="innerHTML"
-                       hx-vals='{"status_filter": "{{ status_filter }}"}'><i class="fa-solid fa-ban me-2"></i>Cancelar</a>
-                </li>
-                {% endif %}
                 {% if task.status.value != 'archived' %}
                 <li>
                     <a class="dropdown-item" href="#" hx-post="/tasks/{{ task.id }}/archive" hx-target="#task-list" hx-swap="innerHTML"

@@ -36,7 +36,7 @@ class UserRepository:
 
         board = KanbanBoard(user_id=user_id, name="Meu Quadro", is_default=True)
         board.columns = [
-            KanbanColumn(name=col["name"], color=col["color"], position=i)
+            KanbanColumn(name=col["name"], color=col["color"], position=i, maps_to_status=col["status"])
             for i, col in enumerate(DEFAULT_KANBAN_COLUMNS)
         ]
         self.session.add(board)

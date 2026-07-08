@@ -117,6 +117,24 @@ async def cancel_task(
     return await service.cancel(task)
 
 
+@router.post("/{task_id}/wait", response_model=TaskRead)
+async def wait_task(
+    task_id: uuid.UUID, user: User = Depends(get_current_user_api), db: AsyncSession = Depends(get_db)
+):
+    service = TaskService(db)
+    task = await _get_owned_task(task_id, user, service)
+    return await service.wait(task)
+
+
+@router.post("/{task_id}/start", response_model=TaskRead)
+async def start_task(
+    task_id: uuid.UUID, user: User = Depends(get_current_user_api), db: AsyncSession = Depends(get_db)
+):
+    service = TaskService(db)
+    task = await _get_owned_task(task_id, user, service)
+    return await service.start(task)
+
+
 @router.post("/{task_id}/reopen", response_model=TaskRead)
 async def reopen_task(
     task_id: uuid.UUID, user: User = Depends(get_current_user_api), db: AsyncSession = Depends(get_db)

@@ -252,6 +252,28 @@ a { text-decoration: none; color: inherit; }
     flex-shrink: 0;
 }
 .task-check.checked { background: var(--triade-success); border-color: var(--triade-success); color: #fff; }
+.task-status-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.status-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--triade-border);
+    background: transparent;
+    color: var(--triade-text-muted);
+    font-size: .78rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.status-btn:hover { background: var(--triade-surface-alt); }
+.status-btn-label { display: none; }
+@media (min-width: 992px) { .status-btn-label { display: inline; } }
+.status-btn.status-done.active { background: var(--triade-success); border-color: var(--triade-success); color: #fff; }
+.status-btn.status-in_progress.active { background: var(--triade-primary); border-color: var(--triade-primary); color: #fff; }
+.status-btn.status-waiting.active { background: var(--triade-warning); border-color: var(--triade-warning); color: #fff; }
+.status-btn.status-cancelled.active { background: var(--triade-danger); border-color: var(--triade-danger); color: #fff; }
 .task-title { font-weight: 500; }
 .task-meta { font-size: .78rem; color: var(--triade-text-muted); display: flex; gap: 10px; flex-wrap: wrap; }
 .priority-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }

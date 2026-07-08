@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.enums import TaskStatus
 from app.models.task import Task
 from app.repositories.attachment_repository import AttachmentRepository
-from app.repositories.kanban_repository import KanbanBoardRepository
+from app.repositories.kanban_repository import KanbanBoardRepository, KanbanColumnRepository
 from app.repositories.task_repository import TaskRepository
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.services import storage_service
@@ -23,19 +23,30 @@ class TaskService:
         self.attachment_repo = AttachmentRepository(db)
         self.tag_service = TagService(db)
         self.kanban_board_repo = KanbanBoardRepository(db)
+        self.kanban_column_repo = KanbanColumnRepository(db)
 
-    async def _default_kanban_column_id(self, user_id: uuid.UUID) -> uuid.UUID | None:
-        """Coluna "A Fazer" (primeira, por posição) do quadro padrão do usuário.
+    async def _kanban_column_id_for_status(self, user_id: uuid.UUID, status: TaskStatus) -> uuid.UUID | None:
+        """Coluna do quadro padrão do usuário mapeada para `status` (se houver).
 
-        Sem isso, tarefas nascem com `kanban_column_id=None` e nunca aparecem
-        em nenhuma coluna — a única forma de uma tarefa entrar no Kanban seria
-        arrastá-la lá de dentro, mas ela nunca chega a ser exibida para ser
-        arrastada. O quadro fica sempre vazio.
+        Mantém Tarefas e Kanban em sincronia: mudar o status por aqui move o
+        cartão para a coluna correspondente; colunas customizadas sem
+        mapeamento (`maps_to_status is None`) simplesmente não participam.
         """
         board = await self.kanban_board_repo.get_default_for_user(user_id)
-        if board and board.columns:
-            return board.columns[0].id
-        return None
+        if not board:
+            return None
+        return next((c.id for c in board.columns if c.maps_to_status == status), None)
+
+    async def _status_updates(self, task: Task, status: TaskStatus, **extra: object) -> dict:
+        """Monta o dict de atualização para uma troca de status, incluindo o
+        reposicionamento no Kanban quando existir coluna mapeada."""
+        updates: dict = {"status": status, **extra}
+        column_id = await self._kanban_column_id_for_status(task.user_id, status)
+        if column_id is not None:
+            existing = await self.repo.list_by_kanban_column(task.user_id, column_id)
+            updates["kanban_column_id"] = column_id
+            updates["kanban_position"] = len(existing)
+        return updates
 
     async def list_by_date(self, user_id: uuid.UUID, day):
         return await self.repo.list_by_date(user_id, day)
@@ -55,7 +66,7 @@ class TaskService:
     async def create(self, user_id: uuid.UUID, data: TaskCreate) -> Task:
         payload = data.model_dump(exclude={"tag_ids"})
         payload["description"] = sanitize_html(payload.get("description"))
-        payload["kanban_column_id"] = await self._default_kanban_column_id(user_id)
+        payload["kanban_column_id"] = await self._kanban_column_id_for_status(user_id, TaskStatus.PENDING)
         task = await self.repo.create(user_id=user_id, **payload)
         if data.tag_ids:
             task.tags = await self.tag_service.get_or_create_many(user_id, data.tag_ids)
@@ -101,24 +112,35 @@ class TaskService:
         return clone
 
     async def archive(self, task: Task) -> Task:
-        return await self.repo.update(task, status=TaskStatus.ARCHIVED)
+        return await self.repo.update(task, **await self._status_updates(task, TaskStatus.ARCHIVED))
 
     async def complete(self, task: Task) -> Task:
-        return await self.repo.update(
-            task, status=TaskStatus.DONE, completed_at=utcnow()
-        )
+        updates = await self._status_updates(task, TaskStatus.DONE, completed_at=utcnow())
+        return await self.repo.update(task, **updates)
 
     async def cancel(self, task: Task) -> Task:
-        return await self.repo.update(task, status=TaskStatus.CANCELLED)
+        return await self.repo.update(task, **await self._status_updates(task, TaskStatus.CANCELLED))
 
     async def wait(self, task: Task) -> Task:
-        return await self.repo.update(task, status=TaskStatus.WAITING)
+        return await self.repo.update(task, **await self._status_updates(task, TaskStatus.WAITING))
+
+    async def start(self, task: Task) -> Task:
+        return await self.repo.update(task, **await self._status_updates(task, TaskStatus.IN_PROGRESS))
 
     async def reopen(self, task: Task) -> Task:
-        return await self.repo.update(task, status=TaskStatus.PENDING, completed_at=None)
+        updates = await self._status_updates(task, TaskStatus.PENDING, completed_at=None)
+        return await self.repo.update(task, **updates)
 
     async def move_to_kanban(self, task: Task, column_id: uuid.UUID, position: int) -> Task:
-        return await self.repo.update(task, kanban_column_id=column_id, kanban_position=position)
+        updates: dict = {"kanban_column_id": column_id, "kanban_position": position}
+        column = await self.kanban_column_repo.get(column_id)
+        if column is not None and column.maps_to_status is not None:
+            updates["status"] = column.maps_to_status
+            if column.maps_to_status == TaskStatus.DONE:
+                updates["completed_at"] = utcnow()
+            elif task.status == TaskStatus.DONE:
+                updates["completed_at"] = None
+        return await self.repo.update(task, **updates)
 
     async def add_attachment(
         self, task: Task, file_name: str, content: bytes, content_type: str

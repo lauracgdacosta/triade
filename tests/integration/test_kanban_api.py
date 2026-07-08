@@ -30,10 +30,14 @@ async def test_move_task_to_column(auth_client):
     task_id = task_res.json()["id"]
 
     board_res = await auth_client.get("/api/v1/kanban/board")
-    target_column = board_res.json()["columns"][2]["id"]
+    columns = board_res.json()["columns"]
+    target_column = columns[2]["id"]
+    assert columns[2]["maps_to_status"] == "waiting"
 
     move_res = await auth_client.post(
         f"/api/v1/tasks/{task_id}/kanban-move", json={"kanban_column_id": target_column, "position": 0}
     )
     assert move_res.status_code == 200
-    assert move_res.json()["kanban_column_id"] == target_column
+    body = move_res.json()
+    assert body["kanban_column_id"] == target_column
+    assert body["status"] == "waiting"

@@ -4,6 +4,7 @@ import uuid
 
 from pydantic import Field
 
+from app.models.enums import TaskStatus
 from app.schemas.common import ORMModel
 from app.schemas.task import TaskRead
 
@@ -24,6 +25,7 @@ class KanbanColumnRead(ORMModel):
     name: str
     color: str
     position: int
+    maps_to_status: TaskStatus | None = None
     tasks: list[TaskRead] = Field(default_factory=list)
 
 

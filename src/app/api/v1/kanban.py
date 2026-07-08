@@ -31,6 +31,7 @@ async def get_board(user: User = Depends(get_current_user_api), db: AsyncSession
                 name=column.name,
                 color=column.color,
                 position=column.position,
+                maps_to_status=column.maps_to_status,
                 tasks=tasks_by_column.get(column.id, []),
             )
         )
@@ -44,7 +45,10 @@ async def create_column(
     service = KanbanService(db)
     board = await service.get_board(user.id)
     column = await service.add_column(board, payload)
-    return KanbanColumnRead(id=column.id, name=column.name, color=column.color, position=column.position)
+    return KanbanColumnRead(
+        id=column.id, name=column.name, color=column.color, position=column.position,
+        maps_to_status=column.maps_to_status,
+    )
 
 
 @router.patch("/columns/{column_id}", response_model=KanbanColumnRead)
@@ -60,7 +64,10 @@ async def update_column(
     if column is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Coluna não encontrada.")
     column = await service.update_column(column, payload)
-    return KanbanColumnRead(id=column.id, name=column.name, color=column.color, position=column.position)
+    return KanbanColumnRead(
+        id=column.id, name=column.name, color=column.color, position=column.position,
+        maps_to_status=column.maps_to_status,
+    )
 
 
 @router.delete("/columns/{column_id}", status_code=status.HTTP_204_NO_CONTENT)
