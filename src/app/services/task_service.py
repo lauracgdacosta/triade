@@ -1,6 +1,7 @@
 """Regra de negócio de Tarefas: CRUD + duplicar/arquivar/concluir/cancelar/reabrir."""
 
 import uuid
+from datetime import date
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -67,6 +68,11 @@ class TaskService:
         payload = data.model_dump(exclude={"tag_ids"})
         payload["description"] = sanitize_html(payload.get("description"))
         payload["kanban_column_id"] = await self._kanban_column_id_for_status(user_id, TaskStatus.PENDING)
+        if payload.get("is_recurring") and payload.get("date") is None:
+            # A recorrência usa `date` como âncora para saber se já existe
+            # ocorrência de hoje (ver ensure_recurring_occurrences); sem data
+            # nunca haveria uma âncora válida.
+            payload["date"] = date.today()
         task = await self.repo.create(user_id=user_id, **payload)
         if data.tag_ids:
             task.tags = await self.tag_service.get_or_create_many(user_id, data.tag_ids)
@@ -110,6 +116,51 @@ class TaskService:
         clone.tags = list(task.tags)
         await self.db.flush()
         return clone
+
+    async def ensure_recurring_occurrences(self, user_id: uuid.UUID, today: date | None = None) -> None:
+        """Gera a ocorrência de hoje de cada tarefa recorrente do usuário, se
+        ainda não existir. Chamado a cada carregamento de página (não há
+        worker/cron persistente neste deploy serverless) — por isso só cobre
+        o dia atual, sem "recuperar" dias em que o app não foi aberto."""
+        today = today or date.today()
+        for template in await self.repo.list_recurring_templates(user_id):
+            latest = await self.repo.latest_occurrence_date(user_id, template.id)
+            if latest is not None and latest >= today:
+                continue
+            await self._spawn_occurrence(template, today)
+
+    async def _spawn_occurrence(self, template: Task, occurrence_date: date) -> Task:
+        clone = await self.repo.create(
+            user_id=template.user_id,
+            title=template.title,
+            description=template.description,
+            notes=template.notes,
+            date=occurrence_date,
+            time=template.time,
+            planned_duration_minutes=template.planned_duration_minutes,
+            priority=template.priority,
+            category_id=template.category_id,
+            project_id=template.project_id,
+            goal_id=template.goal_id,
+            role_id=template.role_id,
+            color=template.color,
+            location=template.location,
+            recurring_parent_id=template.id,
+            kanban_column_id=await self._kanban_column_id_for_status(template.user_id, TaskStatus.PENDING),
+        )
+        clone.tags = list(template.tags)
+        await self.db.flush()
+        return clone
+
+    async def stop_recurrence(self, task: Task) -> Task:
+        """Para a geração de futuras ocorrências da série a que `task`
+        pertence (funciona a partir de qualquer ocorrência, não só do
+        modelo)."""
+        template_id = task.recurring_parent_id or task.id
+        template = task if template_id == task.id else await self.repo.get(template_id)
+        if template is not None:
+            await self.repo.update(template, is_recurring=False)
+        return task
 
     async def archive(self, task: Task) -> Task:
         return await self.repo.update(task, **await self._status_updates(task, TaskStatus.ARCHIVED))

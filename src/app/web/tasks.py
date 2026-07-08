@@ -102,6 +102,7 @@ async def create_task(
     role_id: str = Form(""),
     color: str = Form(""),
     location: str = Form(""),
+    is_recurring: str = Form(""),
     tag_ids: list[str] = Form([]),
     status_filter: str = Form("pending"),
     csrf_token: str = Form(...),
@@ -123,6 +124,7 @@ async def create_task(
         role_id=role_id or None,
         color=color or None,
         location=location or None,
+        is_recurring=bool(is_recurring),
         tag_ids=[uuid.UUID(t) for t in tag_ids if t],
     )
     await TaskService(db).create(user.id, payload)
@@ -151,6 +153,7 @@ async def update_task(
     role_id: str = Form(""),
     color: str = Form(""),
     location: str = Form(""),
+    is_recurring: str = Form(""),
     tag_ids: list[str] = Form([]),
     status_filter: str = Form("pending"),
     csrf_token: str = Form(...),
@@ -174,6 +177,7 @@ async def update_task(
         role_id=role_id or None,
         color=color or None,
         location=location or None,
+        is_recurring=bool(is_recurring),
         tag_ids=[uuid.UUID(t) for t in tag_ids if t],
     )
     await service.update(task, payload)
@@ -247,6 +251,15 @@ async def archive_task(
 ):
     await verify_csrf(request)
     return await _action_and_refresh(request, TaskService(db), user, task_id, "archive", status_filter)
+
+
+@router.post("/{task_id}/stop-recurrence", response_class=HTMLResponse)
+async def stop_recurrence_task(
+    task_id: uuid.UUID, request: Request, status_filter: str = Form("pending"),
+    user: User = Depends(get_current_user_web), db: AsyncSession = Depends(get_db)
+):
+    await verify_csrf(request)
+    return await _action_and_refresh(request, TaskService(db), user, task_id, "stop_recurrence", status_filter)
 
 
 @router.post("/{task_id}/duplicate", response_class=HTMLResponse)

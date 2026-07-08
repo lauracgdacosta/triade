@@ -29,6 +29,7 @@ class TaskCreate(ORMModel):
     role_id: uuid.UUID | None = None
     color: str | None = None
     location: str | None = Field(default=None, max_length=255)
+    is_recurring: bool = False
     tag_ids: list[uuid.UUID] = Field(default_factory=list)
 
 
@@ -48,6 +49,7 @@ class TaskUpdate(ORMModel):
     role_id: uuid.UUID | None = None
     color: str | None = None
     location: str | None = Field(default=None, max_length=255)
+    is_recurring: bool | None = None
     tag_ids: list[uuid.UUID] | None = None
 
 
@@ -76,5 +78,7 @@ class TaskRead(ORMModel):
     color: str | None
     location: str | None
     completed_at: dt.datetime | None
+    is_recurring: bool
+    recurring_parent_id: uuid.UUID | None
     tags: list[TagRead] = Field(default_factory=list)
     attachments: list[AttachmentRead] = Field(default_factory=list)

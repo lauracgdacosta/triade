@@ -156,6 +156,15 @@ async def move_task_kanban(
     return await service.move_to_kanban(task, payload.kanban_column_id, payload.position)
 
 
+@router.post("/{task_id}/stop-recurrence", response_model=TaskRead)
+async def stop_recurrence_task(
+    task_id: uuid.UUID, user: User = Depends(get_current_user_api), db: AsyncSession = Depends(get_db)
+):
+    service = TaskService(db)
+    task = await _get_owned_task(task_id, user, service)
+    return await service.stop_recurrence(task)
+
+
 @router.post("/{task_id}/attachments", response_model=AttachmentRead, status_code=status.HTTP_201_CREATED)
 async def upload_attachment(
     task_id: uuid.UUID,

@@ -47,6 +47,20 @@
                 </div>
             </div>
 
+            <div class="mb-3">
+                {% if task and task.recurring_parent_id %}
+                <div class="form-text"><i class="fa-solid fa-repeat me-1"></i>Esta tarefa faz parte de uma série recorrente diária.</div>
+                {% else %}
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="is_recurring" name="is_recurring"
+                           {{ 'checked' if task and task.is_recurring }}>
+                    <label class="form-check-label" for="is_recurring">
+                        <i class="fa-solid fa-repeat me-1"></i>Repetir todos os dias{{ ' (no horário acima)' if not task }}
+                    </label>
+                </div>
+                {% endif %}
+            </div>
+
             <div class="row g-2 mb-3">
                 <div class="col-6 col-md-3">
                     <label class="form-label">Prioridade</label>

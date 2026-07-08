@@ -1,5 +1,7 @@
 """Testes do TaskService: CRUD e ações (duplicar/arquivar/concluir/cancelar/reabrir)."""
 
+from datetime import date
+
 import pytest
 
 from app.models.enums import Priority, TaskStatus
@@ -143,3 +145,50 @@ async def test_list_by_status(db_session, test_user: User):
     done = await service.list_by_status(test_user.id, TaskStatus.DONE)
     assert len(pending) == 1
     assert len(done) == 1
+
+
+async def test_create_recurring_defaults_date_to_today(db_session, test_user: User):
+    service = TaskService(db_session)
+    task = await service.create(test_user.id, TaskCreate(title="Checar email", is_recurring=True))
+    assert task.is_recurring is True
+    assert task.date == date.today()
+
+
+async def test_ensure_recurring_occurrences_creates_only_missing_days(db_session, test_user: User):
+    service = TaskService(db_session)
+    template = await service.create(
+        test_user.id, TaskCreate(title="Checar email", is_recurring=True, date=date(2026, 1, 1))
+    )
+
+    # No mesmo dia do template: nada a gerar.
+    await service.ensure_recurring_occurrences(test_user.id, today=date(2026, 1, 1))
+    all_tasks = await service.list_between(test_user.id, date(2026, 1, 1), date(2026, 1, 1))
+    assert len(all_tasks) == 1
+
+    # Dia seguinte: gera exatamente uma ocorrência nova.
+    await service.ensure_recurring_occurrences(test_user.id, today=date(2026, 1, 2))
+    occurrence = (await service.list_by_date(test_user.id, date(2026, 1, 2)))[0]
+    assert occurrence.recurring_parent_id == template.id
+    assert occurrence.title == template.title
+    assert occurrence.is_recurring is False
+    assert occurrence.status == TaskStatus.PENDING
+
+    # Rodar de novo no mesmo dia não duplica.
+    await service.ensure_recurring_occurrences(test_user.id, today=date(2026, 1, 2))
+    assert len(await service.list_by_date(test_user.id, date(2026, 1, 2))) == 1
+
+
+async def test_stop_recurrence_from_child_stops_future_generation(db_session, test_user: User):
+    service = TaskService(db_session)
+    template = await service.create(
+        test_user.id, TaskCreate(title="Checar email", is_recurring=True, date=date(2026, 1, 1))
+    )
+    await service.ensure_recurring_occurrences(test_user.id, today=date(2026, 1, 2))
+    child = (await service.list_by_date(test_user.id, date(2026, 1, 2)))[0]
+
+    await service.stop_recurrence(child)
+
+    await service.ensure_recurring_occurrences(test_user.id, today=date(2026, 1, 3))
+    assert await service.list_by_date(test_user.id, date(2026, 1, 3)) == []
+    refreshed_template = await service.get(template.id, test_user.id)
+    assert refreshed_template.is_recurring is False

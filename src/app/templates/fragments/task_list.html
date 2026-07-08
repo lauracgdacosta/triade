@@ -4,7 +4,10 @@
     {% for task in tasks %}
     <div class="task-row {{ 'is-done' if task.status.value == 'done' }}">
         <div class="flex-grow-1" hx-get="/tasks/{{ task.id }}/edit" hx-target="#task-form-container" hx-swap="innerHTML" style="cursor:pointer">
-            <div class="task-title">{{ task.title }}</div>
+            <div class="task-title">
+                {{ task.title }}
+                {% if task.is_recurring or task.recurring_parent_id %}<i class="fa-solid fa-repeat text-muted ms-1" title="Tarefa recorrente diária" style="font-size:.75em"></i>{% endif %}
+            </div>
             <div class="task-meta">
                 <span class="priority-dot priority-{{ task.priority.value }}"></span>
                 {% if task.date %}<span><i class="fa-regular fa-calendar"></i> {{ task.date.strftime('%d/%m') }}</span>{% endif %}
@@ -44,6 +47,14 @@
                 <li>
                     <a class="dropdown-item" href="#" hx-post="/tasks/{{ task.id }}/archive" hx-target="#task-list" hx-swap="innerHTML"
                        hx-vals='{"status_filter": "{{ status_filter }}"}'><i class="fa-solid fa-box-archive me-2"></i>Arquivar</a>
+                </li>
+                {% endif %}
+                {% if task.is_recurring or task.recurring_parent_id %}
+                <li>
+                    <a class="dropdown-item" href="#" hx-post="/tasks/{{ task.id }}/stop-recurrence" hx-target="#task-list" hx-swap="innerHTML"
+                       hx-vals='{"status_filter": "{{ status_filter }}"}' data-confirm="Parar de gerar novas ocorrências desta tarefa? As ocorrências já criadas continuam existindo.">
+                        <i class="fa-solid fa-repeat me-2"></i>Parar repetição
+                    </a>
                 </li>
                 {% endif %}
                 <li><hr class="dropdown-divider"></li>

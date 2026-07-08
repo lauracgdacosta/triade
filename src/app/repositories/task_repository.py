@@ -61,6 +61,19 @@ class TaskRepository(BaseRepository[Task]):
         result = await self.session.execute(stmt)
         return sorted({completed_at.date() for (completed_at,) in result.all()})
 
+    async def list_recurring_templates(self, user_id: uuid.UUID) -> list[Task]:
+        stmt = self._base_stmt(user_id).where(Task.is_recurring.is_(True))
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def latest_occurrence_date(self, user_id: uuid.UUID, template_id: uuid.UUID) -> date | None:
+        stmt = select(func.max(Task.date)).where(
+            Task.user_id == user_id,
+            or_(Task.id == template_id, Task.recurring_parent_id == template_id),
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def search(self, user_id: uuid.UUID, query: str) -> list[Task]:
         like = f"%{query}%"
         stmt = self._base_stmt(user_id).where(

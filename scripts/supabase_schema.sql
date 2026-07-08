@@ -234,22 +234,27 @@ CREATE TABLE tasks (
     role_id UUID, 
     kanban_column_id UUID, 
     kanban_position INTEGER NOT NULL, 
-    color VARCHAR(20), 
-    location VARCHAR(255), 
-    completed_at TIMESTAMP WITHOUT TIME ZONE, 
-    id UUID NOT NULL, 
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL, 
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL, 
-    PRIMARY KEY (id), 
-    FOREIGN KEY(category_id) REFERENCES categories (id) ON DELETE SET NULL, 
-    FOREIGN KEY(goal_id) REFERENCES goals (id) ON DELETE SET NULL, 
-    FOREIGN KEY(kanban_column_id) REFERENCES kanban_columns (id) ON DELETE SET NULL, 
-    FOREIGN KEY(project_id) REFERENCES projects (id) ON DELETE SET NULL, 
-    FOREIGN KEY(role_id) REFERENCES roles (id) ON DELETE SET NULL, 
+    color VARCHAR(20),
+    location VARCHAR(255),
+    completed_at TIMESTAMP WITHOUT TIME ZONE,
+    is_recurring BOOLEAN NOT NULL DEFAULT false,
+    recurring_parent_id UUID,
+    id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY(category_id) REFERENCES categories (id) ON DELETE SET NULL,
+    FOREIGN KEY(goal_id) REFERENCES goals (id) ON DELETE SET NULL,
+    FOREIGN KEY(kanban_column_id) REFERENCES kanban_columns (id) ON DELETE SET NULL,
+    FOREIGN KEY(project_id) REFERENCES projects (id) ON DELETE SET NULL,
+    FOREIGN KEY(role_id) REFERENCES roles (id) ON DELETE SET NULL,
+    FOREIGN KEY(recurring_parent_id) REFERENCES tasks (id) ON DELETE SET NULL,
     FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE INDEX ix_tasks_category_id ON tasks (category_id);
+
+CREATE INDEX ix_tasks_recurring_parent_id ON tasks (recurring_parent_id);
 
 CREATE INDEX ix_tasks_date ON tasks (date);
 

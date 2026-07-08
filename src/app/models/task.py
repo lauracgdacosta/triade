@@ -52,6 +52,15 @@ class Task(Base, UUIDPkMixin, TimestampMixin):
     )
     kanban_position: Mapped[int] = mapped_column(Integer, default=0)
 
+    # Recorrência diária: `is_recurring` marca a tarefa "modelo" (a partir da
+    # qual novas ocorrências são geradas); `recurring_parent_id` liga cada
+    # ocorrência gerada de volta ao modelo que a originou. Ver
+    # TaskService.ensure_recurring_occurrences.
+    is_recurring: Mapped[bool] = mapped_column(default=False)
+    recurring_parent_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("tasks.id", ondelete="SET NULL"), index=True
+    )
+
     color: Mapped[str | None] = mapped_column(String(20))
     location: Mapped[str | None] = mapped_column(String(255))
 
