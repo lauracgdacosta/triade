@@ -282,6 +282,10 @@ a { text-decoration: none; color: inherit; }
 }
 .kanban-column-header { display: flex; align-items: center; gap: 8px; padding: 4px 6px 12px; font-weight: 600; }
 .kanban-column-dot { width: 10px; height: 10px; border-radius: 50%; }
+/* min-height garante uma área de drop mesmo quando a coluna está vazia —
+   sem isso, .kanban-cards colapsa para altura zero e nada pode ser
+   solto ali. */
+.kanban-cards { min-height: 60px; }
 .kanban-card {
     background: var(--triade-surface);
     border-radius: 10px;
