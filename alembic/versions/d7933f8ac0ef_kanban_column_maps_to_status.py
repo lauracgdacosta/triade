@@ -18,11 +18,14 @@ depends_on: str | Sequence[str] | None = None
 
 
 _DEFAULT_NAME_TO_STATUS = {
-    "A Fazer": "pending",
-    "Em Andamento": "in_progress",
-    "Aguardando": "waiting",
-    "Concluído": "done",
-    "Arquivado": "archived",
+    # SQLAlchemy's Enum(TaskStatus, native_enum=False) stores the member
+    # NAME ("PENDING"), not its .value ("pending") — must match what the
+    # ORM itself writes/reads for this column.
+    "A Fazer": "PENDING",
+    "Em Andamento": "IN_PROGRESS",
+    "Aguardando": "WAITING",
+    "Concluído": "DONE",
+    "Arquivado": "ARCHIVED",
 }
 
 
