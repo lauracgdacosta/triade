@@ -1,6 +1,6 @@
 """Testes do cliente HTTP do Google Calendar (OAuth2 + API v3), mockado com respx."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import httpx
 import pytest
@@ -86,6 +86,24 @@ async def test_list_events_full_sync_uses_time_min_max():
     assert "timeMin" in request.url.params
     assert "timeMax" in request.url.params
     assert request.url.params["singleEvents"] == "true"
+
+
+@respx.mock
+async def test_list_events_full_sync_accepts_timezone_aware_bounds():
+    """Regressão: GoogleCalendarSyncService.pull_account passa datetimes
+    aware (datetime.now(UTC) +/- timedelta). `.isoformat() + "Z"` ingênuo
+    produz "...+00:00Z" (offset duplicado) para esse caso, e o Google
+    rejeita com 400 Bad Request — só reproduzia em produção, nunca com os
+    datetimes naive usados no teste acima."""
+    route = respx.get("https://www.googleapis.com/calendar/v3/calendars/primary/events").mock(
+        return_value=httpx.Response(200, json={"items": []})
+    )
+    await client.list_events(
+        "at-123", "primary", time_min=datetime(2026, 1, 1, tzinfo=UTC), time_max=datetime(2026, 12, 31, tzinfo=UTC)
+    )
+    request = route.calls.last.request
+    assert request.url.params["timeMin"] == "2026-01-01T00:00:00Z"
+    assert request.url.params["timeMax"] == "2026-12-31T00:00:00Z"
 
 
 @respx.mock

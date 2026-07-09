@@ -6,7 +6,7 @@ pesadas). Este módulo só fala HTTP puro — a tradução entre o schema `Event
 do Tríade e o corpo de evento do Google mora em `GoogleCalendarSyncService`.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlencode
 
@@ -58,6 +58,16 @@ def _headers(access_token: str) -> dict[str, str]:
 
 def _events_url(calendar_id: str, suffix: str = "") -> str:
     return f"{_CALENDAR_BASE}/calendars/{calendar_id}/events{suffix}"
+
+
+def _rfc3339_utc(value: datetime) -> str:
+    """Formata como RFC3339 UTC (sufixo "Z"), aceitando datetime aware ou
+    naive. `.isoformat() + "Z"` sozinho quebra para datetimes aware — o
+    isoformat() já inclui o offset ("+00:00"), então o "Z" extra produz
+    "...+00:00Z", que a API do Google rejeita com 400 Bad Request."""
+    if value.tzinfo is not None:
+        value = value.astimezone(UTC).replace(tzinfo=None)
+    return value.isoformat() + "Z"
 
 
 def authorization_url(state: str) -> str:
@@ -136,9 +146,9 @@ async def list_events(
         params["syncToken"] = sync_token
     else:
         if time_min is not None:
-            params["timeMin"] = time_min.isoformat() + "Z"
+            params["timeMin"] = _rfc3339_utc(time_min)
         if time_max is not None:
-            params["timeMax"] = time_max.isoformat() + "Z"
+            params["timeMax"] = _rfc3339_utc(time_max)
     async with httpx.AsyncClient(timeout=10) as client:
         response = await client.get(_events_url(calendar_id), headers=_headers(access_token), params=params)
     _handle_error(response)
