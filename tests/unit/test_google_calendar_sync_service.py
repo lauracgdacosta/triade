@@ -104,6 +104,22 @@ async def test_pull_account_410_forces_full_resync(db_session, test_user: User):
 
 
 @respx.mock
+async def test_pull_account_insufficient_scope_deactivates_account(db_session, test_user: User):
+    account = await _connected_account(db_session, test_user.id)
+    respx.get(_EVENTS_URL).mock(
+        return_value=httpx.Response(
+            403, json={"error": {"message": "Request had insufficient authentication scopes."}}
+        )
+    )
+
+    with pytest.raises(Exception):
+        await GoogleCalendarSyncService(db_session).pull_account(account)
+
+    refreshed = await GoogleCalendarAccountService(db_session).get(account.id, test_user.id)
+    assert refreshed.is_active is False
+
+
+@respx.mock
 async def test_pull_account_cancelled_status_deletes_local_event(db_session, test_user: User):
     account = await _connected_account(db_session, test_user.id)
     sync = GoogleCalendarSyncService(db_session)

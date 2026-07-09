@@ -84,6 +84,17 @@ async def callback(
         redirect.delete_cookie(_STATE_COOKIE, path="/")
         return redirect
 
+    granted_scope = tokens.get("scope", "")
+    if client.CALENDAR_SCOPE not in granted_scope.split():
+        # A tela de consentimento do Google permite desmarcar escopos
+        # individualmente — o usuário pode aprovar login (openid+email) e
+        # negar o Calendar. Sem essa checagem a conta seria salva como
+        # "conectada" e todo pull/push falharia depois com 403 silencioso
+        # nos logs, sem sinalizar pro usuário que precisa reconectar.
+        redirect = RedirectResponse("/settings?google_error=calendar_scope_denied", status_code=status.HTTP_303_SEE_OTHER)
+        redirect.delete_cookie(_STATE_COOKIE, path="/")
+        return redirect
+
     await GoogleCalendarAccountService(db).create_from_oauth(
         user.id,
         google_sub=userinfo["sub"],

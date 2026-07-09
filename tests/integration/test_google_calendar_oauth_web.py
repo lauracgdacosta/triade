@@ -91,6 +91,40 @@ async def test_callback_without_refresh_token_does_not_persist_account(auth_clie
     assert response.headers["location"] == "/settings?google_error=no_refresh_token"
 
 
+@respx.mock
+async def test_callback_without_calendar_scope_does_not_persist_account(auth_client):
+    """Usuário pode desmarcar o escopo do Calendar na tela de consentimento
+    do Google e ainda assim aprovar login (openid+email) — sem essa
+    checagem a conta seria salva como "conectada" e todo sync falharia
+    depois com 403 silencioso."""
+    connect_res = await auth_client.get("/integrations/google/connect", follow_redirects=False)
+    state = re.search(r"state=([^&]+)", connect_res.headers["location"]).group(1)
+
+    respx.post("https://oauth2.googleapis.com/token").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "access_token": "at-1",
+                "refresh_token": "rt-1",
+                "expires_in": 3600,
+                "scope": "openid email",
+            },
+        )
+    )
+    respx.get("https://www.googleapis.com/oauth2/v3/userinfo").mock(
+        return_value=httpx.Response(200, json={"sub": "sub-1", "email": "trabalho@example.com"})
+    )
+
+    response = await auth_client.get(
+        f"/integrations/google/callback?code=abc123&state={state}", follow_redirects=False
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/settings?google_error=calendar_scope_denied"
+
+    settings_page = await auth_client.get("/settings")
+    assert "trabalho@example.com" not in settings_page.text
+
+
 async def test_disconnect_without_csrf_is_rejected(auth_client):
     response = await auth_client.post(
         f"/integrations/google/{uuid.uuid4()}/disconnect", data={"csrf_token": "forjado"}

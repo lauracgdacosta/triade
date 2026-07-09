@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 _FULL_SYNC_PAST_DAYS = 90
 _FULL_SYNC_FUTURE_DAYS = 365
+_INSUFFICIENT_SCOPE_MSG = "insufficient authentication scopes"
 
 
 class GoogleCalendarSyncService:
@@ -65,6 +66,12 @@ class GoogleCalendarSyncService:
                 await self.accounts.clear_sync_token(account)
                 await self.pull_account(account, _retried=True)
                 return
+            if exc.status_code == 403 and _INSUFFICIENT_SCOPE_MSG in exc.message.lower():
+                # Conta autorizada sem o escopo do Calendar (usuário negou
+                # esse escopo específico na tela de consentimento do
+                # Google) — sem isso o pull falharia pra sempre, só nos
+                # logs, sem a UI nunca oferecer "reconectar".
+                await self.accounts.deactivate(account)
             raise
 
         next_sync_token: str | None = None
