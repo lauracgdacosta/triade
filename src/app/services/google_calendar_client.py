@@ -20,7 +20,10 @@ _TOKEN_URL = "https://oauth2.googleapis.com/token"
 _AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 _USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 _CALENDAR_BASE = "https://www.googleapis.com/calendar/v3"
-_SCOPE = "https://www.googleapis.com/auth/calendar"
+# openid+email são exigidos pelo endpoint /oauth2/v3/userinfo (usado logo
+# após o exchange pra descobrir a conta conectada) — sem eles o token só
+# tem acesso à Calendar API e a chamada de userinfo falha com 401/403.
+_SCOPE = "openid email https://www.googleapis.com/auth/calendar"
 
 
 class GoogleCalendarError(Exception):
