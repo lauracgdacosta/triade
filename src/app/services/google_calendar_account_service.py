@@ -5,6 +5,13 @@ precisa falar com a Calendar API (push e pull) sempre passa por
 `get_valid_access_token`, nunca lê `access_token_encrypted` diretamente.
 """
 
+# Necessário porque a classe tem um método literalmente chamado `list()`: sem
+# isso, a anotação `list[...]` de um método declarado DEPOIS dele resolveria
+# pro método em vez do builtin (avaliação eager de anotações em Python
+# <=3.13, usado em produção/CI — mas não no 3.14 local, onde o bug fica
+# invisível). Ver memória "triade-python-annotation-bug".
+from __future__ import annotations
+
 import uuid
 from datetime import UTC, datetime, timedelta
 
