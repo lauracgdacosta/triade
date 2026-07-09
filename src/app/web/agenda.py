@@ -12,6 +12,8 @@ from app.models.event import Event
 from app.models.user import User
 from app.services.category_service import CategoryService
 from app.services.event_service import EventService
+from app.services.google_calendar_account_service import GoogleCalendarAccountService
+from app.services.google_calendar_sync_service import GoogleCalendarSyncService
 from app.services.project_service import ProjectService
 from app.templating import render
 from app.web.context import base_context
@@ -32,6 +34,7 @@ def _form_values(event: Event | None, prefill_start: str, prefill_end: str) -> d
             "location": "",
             "color": "#6366f1",
             "recurrence_rule": "",
+            "google_account_id": "",
         }
     return {
         "id": str(event.id),
@@ -44,11 +47,16 @@ def _form_values(event: Event | None, prefill_start: str, prefill_end: str) -> d
         "location": event.location or "",
         "color": event.color or "#6366f1",
         "recurrence_rule": event.recurrence_rule or "",
+        "google_account_id": str(event.google_account_id) if event.google_account_id else "",
     }
 
 
 @router.get("", response_class=HTMLResponse)
 async def agenda_page(request: Request, user: User = Depends(get_current_user_web), db: AsyncSession = Depends(get_db)):
+    # Pull lazy: só roda quando a Agenda é aberta (sem worker/cron neste
+    # deploy serverless). Nunca deixa uma falha do Google derrubar a
+    # página — GoogleCalendarSyncService.pull_all_accounts já trata isso.
+    await GoogleCalendarSyncService(db).pull_all_accounts(user.id)
     context = await base_context(request, user, db)
     context["categories"] = await CategoryService(db).list(user.id)
     context["projects"] = await ProjectService(db).list(user.id)
@@ -66,6 +74,7 @@ async def new_event_page(
     context = await base_context(request, user, db)
     context["categories"] = await CategoryService(db).list(user.id)
     context["projects"] = await ProjectService(db).list(user.id)
+    context["google_accounts"] = await GoogleCalendarAccountService(db).list_active(user.id)
     context["is_edit"] = False
     context["form_values"] = _form_values(None, start or "", end or "")
     return render(request, "pages/event_form.html", context)
@@ -84,6 +93,7 @@ async def edit_event_page(
     context = await base_context(request, user, db)
     context["categories"] = await CategoryService(db).list(user.id)
     context["projects"] = await ProjectService(db).list(user.id)
+    context["google_accounts"] = await GoogleCalendarAccountService(db).list_active(user.id)
     context["is_edit"] = True
     context["form_values"] = _form_values(event, "", "")
     return render(request, "pages/event_form.html", context)

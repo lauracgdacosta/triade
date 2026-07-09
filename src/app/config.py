@@ -25,6 +25,11 @@ class Settings(BaseSettings):
 
     oauth_redirect_url: str = "http://localhost:8000/auth/callback"
 
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_oauth_redirect_url: str = "http://localhost:8000/integrations/google/callback"
+    google_token_encryption_key: str = ""
+
     session_cookie_name: str = "triade_session"
     session_cookie_secure: bool = False
     csrf_cookie_name: str = "triade_csrf"

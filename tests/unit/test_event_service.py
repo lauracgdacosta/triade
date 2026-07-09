@@ -1,12 +1,14 @@
 """Testes do EventService: CRUD e detecção de conflito de horário."""
 
+import uuid
 from datetime import UTC, datetime
 
 import pytest
+from pydantic import ValidationError
 
 from app.models.user import User
 from app.schemas.event import EventCreate, EventUpdate
-from app.services.event_service import EventService
+from app.services.event_service import EventService, RecurrenceGoogleConflictError
 
 pytestmark = pytest.mark.asyncio
 
@@ -109,3 +111,31 @@ async def test_event_start_end_stored_naive_even_from_aware_input(db_session, te
         test_user.id, EventCreate(title="Aware", start_at=start, end_at=datetime(2026, 1, 10, 10, tzinfo=UTC))
     )
     assert event.start_at.tzinfo is None
+
+
+def test_create_recurring_event_with_google_account_is_rejected_by_schema():
+    # Barrado já na camada de schema (os dois campos no mesmo payload) —
+    # o EventService nunca chega a ser chamado nesse caso.
+    with pytest.raises(ValidationError):
+        EventCreate(
+            title="Recorrente",
+            start_at=datetime(2026, 1, 10, 9),
+            end_at=datetime(2026, 1, 10, 10),
+            recurrence_rule="FREQ=WEEKLY",
+            google_account_id=uuid.uuid4(),
+        )
+
+
+async def test_update_setting_google_account_on_already_recurring_event_is_rejected(db_session, test_user: User):
+    service = EventService(db_session)
+    event, _ = await service.create(
+        test_user.id,
+        EventCreate(
+            title="Recorrente",
+            start_at=datetime(2026, 1, 10, 9),
+            end_at=datetime(2026, 1, 10, 10),
+            recurrence_rule="FREQ=WEEKLY",
+        ),
+    )
+    with pytest.raises(RecurrenceGoogleConflictError):
+        await service.update(event, EventUpdate(google_account_id=uuid.uuid4()))

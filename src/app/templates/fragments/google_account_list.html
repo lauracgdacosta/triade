@@ -1,0 +1,31 @@
+<div class="row g-3">
+{% for acc in google_accounts %}
+    <div class="col-md-6">
+        <div class="triade-card triade-card-body d-flex align-items-center gap-3">
+            <i class="fa-brands fa-google fa-lg"></i>
+            <div class="flex-grow-1">
+                <div class="fw-semibold">{{ acc.email }}</div>
+                <div class="small text-muted">
+                    {% if not acc.is_active %}
+                        Reconexão necessária
+                    {% elif acc.last_synced_at %}
+                        Última sincronização: {{ acc.last_synced_at.strftime('%d/%m %H:%M') }}
+                    {% else %}
+                        Ainda não sincronizado
+                    {% endif %}
+                </div>
+            </div>
+            {% if not acc.is_active %}
+            <a href="/integrations/google/connect" class="btn btn-sm btn-outline-primary">Reconectar</a>
+            {% endif %}
+            <form method="post" action="/integrations/google/{{ acc.id }}/disconnect"
+                  onsubmit="return confirm('Desconectar esta conta? Os eventos já sincronizados continuam existindo, só param de sincronizar.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Desconectar</button>
+            </form>
+        </div>
+    </div>
+{% else %}
+    <p class="text-muted">Nenhuma conta Google conectada.</p>
+{% endfor %}
+</div>

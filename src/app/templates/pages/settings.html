@@ -5,6 +5,9 @@
     <h2 class="mb-4">Configurações</h2>
 
     {% if saved %}<div class="alert alert-success py-2">Preferências salvas com sucesso.</div>{% endif %}
+    {% if request.query_params.get('google_error') %}
+    <div class="alert alert-danger py-2">Não foi possível conectar a conta Google ({{ request.query_params.get('google_error') }}). Tente novamente.</div>
+    {% endif %}
 
     <form method="post" action="/settings" class="triade-card triade-card-body">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -56,6 +59,17 @@
 
         <button type="submit" class="btn btn-primary">Salvar</button>
     </form>
+
+    <hr>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">Contas Google conectadas</h6>
+        <a href="/integrations/google/connect" class="btn btn-outline-primary btn-sm">
+            <i class="fa-brands fa-google"></i> Conectar conta Google
+        </a>
+    </div>
+    <div id="google-accounts-list">
+        {% include "fragments/google_account_list.html" %}
+    </div>
 </div>
 {% endblock %}
 {% block extra_scripts %}

@@ -39,3 +39,10 @@ class EventRepository(BaseRepository[Event]):
         stmt = select(Event).where(and_(*conditions))
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_by_google_event(self, google_account_id: uuid.UUID, google_event_id: str) -> Event | None:
+        stmt = select(Event).where(
+            Event.google_account_id == google_account_id, Event.google_event_id == google_event_id
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()

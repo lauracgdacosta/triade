@@ -19,11 +19,18 @@ class EventCreate(ORMModel):
     recurrence_rule: str | None = None
     category_id: uuid.UUID | None = None
     project_id: uuid.UUID | None = None
+    google_account_id: uuid.UUID | None = None
 
     @model_validator(mode="after")
     def _check_range(self) -> "EventCreate":
         if self.end_at <= self.start_at:
             raise ValueError("end_at deve ser posterior a start_at")
+        return self
+
+    @model_validator(mode="after")
+    def _check_recurrence_vs_google(self) -> "EventCreate":
+        if self.recurrence_rule and self.google_account_id:
+            raise ValueError("Compromissos recorrentes não podem ser sincronizados com o Google Calendar.")
         return self
 
 
@@ -38,6 +45,17 @@ class EventUpdate(ORMModel):
     recurrence_rule: str | None = None
     category_id: uuid.UUID | None = None
     project_id: uuid.UUID | None = None
+    google_account_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def _check_recurrence_vs_google(self) -> "EventUpdate":
+        # Patch parcial: só valida quando os DOIS campos vierem juntos no
+        # mesmo payload — a combinação com o estado já persistido (payload
+        # setando só um dos dois) é validada em EventService.update, que
+        # tem acesso ao registro atual.
+        if self.recurrence_rule and self.google_account_id:
+            raise ValueError("Compromissos recorrentes não podem ser sincronizados com o Google Calendar.")
+        return self
 
 
 class EventRead(ORMModel):
@@ -52,4 +70,6 @@ class EventRead(ORMModel):
     recurrence_rule: str | None
     category_id: uuid.UUID | None
     project_id: uuid.UUID | None
+    google_account_id: uuid.UUID | None
+    google_event_id: str | None
     has_conflict: bool = False

@@ -8,6 +8,7 @@ from app.web import (
     categories,
     dashboard,
     goals,
+    google_calendar,
     kanban,
     notes,
     notifications,
@@ -25,6 +26,7 @@ web_router.include_router(auth.router)
 web_router.include_router(dashboard.router)
 web_router.include_router(tasks.router)
 web_router.include_router(agenda.router)
+web_router.include_router(google_calendar.router)
 web_router.include_router(kanban.router)
 web_router.include_router(categories.router)
 web_router.include_router(projects.router)

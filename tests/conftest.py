@@ -4,6 +4,7 @@ import uuid
 from collections.abc import AsyncIterator
 
 import pytest_asyncio
+from cryptography.fernet import Fernet
 from httpx import ASGITransport, AsyncClient
 from jose import jwt
 from sqlalchemy import event
@@ -23,6 +24,10 @@ from app.models.user import User
 # SUPABASE_JWT_SECRET de produção) existir na máquina — caso contrário a
 # suíte de testes fica acoplada ao ambiente local de quem a executa.
 get_settings().supabase_jwt_secret = ""
+
+# Idem para a chave de criptografia dos tokens do Google Calendar (ver
+# app/utils/crypto.py) — precisa existir independentemente de um `.env` real.
+get_settings().google_token_encryption_key = Fernet.generate_key().decode()
 
 test_engine = create_async_engine(
     "sqlite+aiosqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool

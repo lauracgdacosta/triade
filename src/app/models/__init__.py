@@ -4,6 +4,7 @@ from app.models.attachment import Attachment
 from app.models.category import Category
 from app.models.event import Event
 from app.models.goal import Goal
+from app.models.google_calendar_account import GoogleCalendarAccount
 from app.models.kanban import KanbanBoard, KanbanColumn
 from app.models.note import Note
 from app.models.notification import Notification
@@ -21,6 +22,7 @@ __all__ = [
     "Category",
     "Event",
     "Goal",
+    "GoogleCalendarAccount",
     "KanbanBoard",
     "KanbanColumn",
     "Note",

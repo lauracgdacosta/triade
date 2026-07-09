@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, ForeignKey, String, Text, Uuid
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, validates
 
 from app.database import Base
@@ -31,6 +31,16 @@ class Event(Base, UUIDPkMixin, TimestampMixin):
     project_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("projects.id", ondelete="SET NULL"), index=True
     )
+
+    # Vínculo com Google Calendar (ver GoogleCalendarSyncService). Todos NULL
+    # = evento puramente local, nunca sincronizado — o estado padrão. Eventos
+    # com `recurrence_rule` setado não sincronizam (ver validação nos
+    # schemas/EventService).
+    google_account_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("google_calendar_accounts.id", ondelete="SET NULL"), index=True
+    )
+    google_event_id: Mapped[str | None] = mapped_column(String(255), index=True)
+    google_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     @validates("start_at", "end_at")
     def _validate_datetime(self, _key: str, value: datetime) -> datetime:

@@ -11,6 +11,17 @@ from app.repositories.event_repository import EventRepository
 from app.schemas.event import EventCreate, EventUpdate
 
 
+class RecurrenceGoogleConflictError(ValueError):
+    """Compromissos recorrentes (RRULE) não podem estar vinculados a uma conta Google."""
+
+
+def _assert_recurrence_google_compatible(recurrence_rule: str | None, google_account_id) -> None:
+    if recurrence_rule and google_account_id:
+        raise RecurrenceGoogleConflictError(
+            "Compromissos recorrentes não podem ser sincronizados com o Google Calendar."
+        )
+
+
 class EventService:
     def __init__(self, db: AsyncSession):
         self.repo = EventRepository(db)
@@ -33,12 +44,16 @@ class EventService:
         return len(conflicts) > 0
 
     async def create(self, user_id: uuid.UUID, data: EventCreate) -> tuple[Event, bool]:
+        _assert_recurrence_google_compatible(data.recurrence_rule, data.google_account_id)
         conflict = await self.has_conflict(user_id, data.start_at, data.end_at)
         event = await self.repo.create(user_id=user_id, **data.model_dump())
         return event, conflict
 
     async def update(self, event: Event, data: EventUpdate) -> tuple[Event, bool]:
         payload = data.model_dump(exclude_unset=True)
+        recurrence_rule = payload.get("recurrence_rule", event.recurrence_rule)
+        google_account_id = payload.get("google_account_id", event.google_account_id)
+        _assert_recurrence_google_compatible(recurrence_rule, google_account_id)
         start = payload.get("start_at", event.start_at)
         end = payload.get("end_at", event.end_at)
         conflict = await self.has_conflict(event.user_id, start, end, exclude_id=event.id)

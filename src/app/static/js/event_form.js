@@ -18,6 +18,20 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("event-start").value = prefillStart ? toLocalInput(new Date(prefillStart)) : toLocalInput(new Date());
     document.getElementById("event-end").value = prefillEnd ? toLocalInput(new Date(prefillEnd)) : toLocalInput(new Date(Date.now() + 3600000));
 
+    // Compromissos recorrentes não sincronizam com o Google (ver
+    // EventService._assert_recurrence_google_compatible) — reflete a regra
+    // no client antes do 422 do backend, desabilitando um campo quando o
+    // outro está preenchido.
+    const recurrenceInput = document.getElementById("event-recurrence");
+    const googleAccountSelect = document.getElementById("event-google-account");
+    function syncRecurrenceGoogleToggle() {
+        googleAccountSelect.disabled = recurrenceInput.value.trim() !== "";
+        recurrenceInput.disabled = googleAccountSelect.value !== "";
+    }
+    recurrenceInput.addEventListener("input", syncRecurrenceGoogleToggle);
+    googleAccountSelect.addEventListener("change", syncRecurrenceGoogleToggle);
+    syncRecurrenceGoogleToggle();
+
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         conflictAlert.classList.add("d-none");
@@ -30,7 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
             project_id: document.getElementById("event-project").value || null,
             location: document.getElementById("event-location").value || null,
             color: document.getElementById("event-color").value,
-            recurrence_rule: document.getElementById("event-recurrence").value || null,
+            recurrence_rule: recurrenceInput.disabled ? null : (recurrenceInput.value || null),
+            google_account_id: googleAccountSelect.disabled ? null : (googleAccountSelect.value || null),
         };
         const res = await fetch(eventId ? `/api/v1/events/${eventId}` : "/api/v1/events", {
             method: eventId ? "PATCH" : "POST",

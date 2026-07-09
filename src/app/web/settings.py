@@ -10,6 +10,7 @@ from app.database import get_db
 from app.models.enums import ThemeMode
 from app.models.user import User
 from app.schemas.user import SettingsUpdate
+from app.services.google_calendar_account_service import GoogleCalendarAccountService
 from app.services.settings_service import SettingsService
 from app.templating import render
 from app.web.context import base_context
@@ -21,6 +22,7 @@ router = APIRouter(prefix="/settings", tags=["web-settings"])
 async def settings_page(request: Request, user: User = Depends(get_current_user_web), db: AsyncSession = Depends(get_db)):
     context = await base_context(request, user, db)
     context["saved"] = False
+    context["google_accounts"] = await GoogleCalendarAccountService(db).list(user.id)
     return render(request, "pages/settings.html", context)
 
 
@@ -55,4 +57,5 @@ async def update_settings(
     )
     context = await base_context(request, user, db)
     context["saved"] = True
+    context["google_accounts"] = await GoogleCalendarAccountService(db).list(user.id)
     return render(request, "pages/settings.html", context)

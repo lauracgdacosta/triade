@@ -152,24 +152,50 @@ CREATE TABLE user_settings (
     FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
+CREATE TABLE google_calendar_accounts (
+    user_id UUID NOT NULL,
+    google_sub VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    calendar_id VARCHAR(255) NOT NULL,
+    access_token_encrypted TEXT NOT NULL,
+    refresh_token_encrypted TEXT NOT NULL,
+    token_expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    scope VARCHAR(255) NOT NULL,
+    sync_token TEXT,
+    last_synced_at TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN NOT NULL,
+    id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (user_id, google_sub),
+    FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_google_calendar_accounts_user_id ON google_calendar_accounts (user_id);
+
 CREATE TABLE events (
-    user_id UUID NOT NULL, 
-    title VARCHAR(255) NOT NULL, 
-    description TEXT, 
-    start_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
-    end_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
-    all_day BOOLEAN NOT NULL, 
-    location VARCHAR(255), 
-    color VARCHAR(20), 
-    recurrence_rule VARCHAR(500), 
-    category_id UUID, 
-    project_id UUID, 
-    id UUID NOT NULL, 
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL, 
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL, 
-    PRIMARY KEY (id), 
-    FOREIGN KEY(category_id) REFERENCES categories (id) ON DELETE SET NULL, 
-    FOREIGN KEY(project_id) REFERENCES projects (id) ON DELETE SET NULL, 
+    user_id UUID NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    start_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    end_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    all_day BOOLEAN NOT NULL,
+    location VARCHAR(255),
+    color VARCHAR(20),
+    recurrence_rule VARCHAR(500),
+    category_id UUID,
+    project_id UUID,
+    google_account_id UUID,
+    google_event_id VARCHAR(255),
+    google_synced_at TIMESTAMP WITH TIME ZONE,
+    id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY(category_id) REFERENCES categories (id) ON DELETE SET NULL,
+    FOREIGN KEY(project_id) REFERENCES projects (id) ON DELETE SET NULL,
+    FOREIGN KEY(google_account_id) REFERENCES google_calendar_accounts (id) ON DELETE SET NULL,
     FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
@@ -178,6 +204,10 @@ CREATE INDEX ix_events_category_id ON events (category_id);
 CREATE INDEX ix_events_end_at ON events (end_at);
 
 CREATE INDEX ix_events_project_id ON events (project_id);
+
+CREATE INDEX ix_events_google_account_id ON events (google_account_id);
+
+CREATE INDEX ix_events_google_event_id ON events (google_event_id);
 
 CREATE INDEX ix_events_start_at ON events (start_at);
 
@@ -382,6 +412,7 @@ ALTER TABLE public.attachments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kanban_boards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kanban_columns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.google_calendar_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.time_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pomodoro_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
@@ -398,6 +429,7 @@ CREATE POLICY self_access ON public.tags FOR ALL USING (user_id = auth.uid()) WI
 CREATE POLICY self_access ON public.tasks FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 CREATE POLICY self_access ON public.kanban_boards FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 CREATE POLICY self_access ON public.events FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+CREATE POLICY self_access ON public.google_calendar_accounts FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 CREATE POLICY self_access ON public.time_entries FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 CREATE POLICY self_access ON public.pomodoro_sessions FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 CREATE POLICY self_access ON public.notes FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
