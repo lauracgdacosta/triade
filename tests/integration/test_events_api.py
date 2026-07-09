@@ -52,3 +52,31 @@ async def test_event_invalid_range_rejected(auth_client):
         json={"title": "Inválido", "start_at": "2026-06-01T10:00:00", "end_at": "2026-06-01T09:00:00"},
     )
     assert response.status_code == 422
+
+
+async def test_timed_event_response_marks_start_end_as_utc(auth_client):
+    """Sem o "Z" no JSON, o FullCalendar no browser interpretaria o horário
+    (armazenado em UTC) como se já fosse local, mostrando o compromisso 3h
+    adiantado em fusos como o do Brasil (UTC-3)."""
+    create_res = await auth_client.post(
+        "/api/v1/events",
+        json={"title": "Com horário", "start_at": "2026-05-01T09:00:00Z", "end_at": "2026-05-01T10:00:00Z"},
+    )
+    body = create_res.json()
+    assert body["start_at"] == "2026-05-01T09:00:00Z"
+    assert body["end_at"] == "2026-05-01T10:00:00Z"
+
+
+async def test_all_day_event_response_has_no_utc_marker(auth_client):
+    create_res = await auth_client.post(
+        "/api/v1/events",
+        json={
+            "title": "Dia inteiro",
+            "start_at": "2026-05-01T00:00:00",
+            "end_at": "2026-05-02T00:00:00",
+            "all_day": True,
+        },
+    )
+    body = create_res.json()
+    assert body["start_at"] == "2026-05-01T00:00:00"
+    assert body["end_at"] == "2026-05-02T00:00:00"

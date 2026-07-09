@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_serializer, model_validator
 
 from app.schemas.common import ORMModel
 
@@ -73,3 +73,21 @@ class EventRead(ORMModel):
     google_account_id: uuid.UUID | None
     google_event_id: str | None
     has_conflict: bool = False
+
+    @field_serializer("start_at", "end_at", when_used="json")
+    def _serialize_utc(self, value: datetime) -> str:
+        """Event.start_at/end_at são sempre naive-UTC no banco (ver
+        Event._validate_datetime) — sem o "Z" explícito aqui, o JSON não diz
+        que é UTC e o FullCalendar no browser interpreta como horário local,
+        aplicando o fuso duas vezes (ex.: BRT vira +3h adiantado). `when_used`
+        restrito a "json" evita corromper `_to_read`, que faz
+        `.model_dump()` (modo python) e reconstrói o EventRead em seguida —
+        se o serializer rodasse aí também, o valor viraria string, seria
+        reparsado como aware, e um "Z" seria concatenado de novo em cima do
+        offset já presente. Eventos dia-inteiro (`all_day`) não têm horário
+        significativo — o Google já manda só a data — então ficam sem "Z"
+        pro FullCalendar tratar como data "flutuante" em vez de instante.
+        """
+        if self.all_day:
+            return value.isoformat()
+        return value.isoformat() + "Z"
