@@ -19,6 +19,7 @@ from app.models.google_calendar_account import GoogleCalendarAccount
 from app.repositories.event_repository import EventRepository
 from app.services import google_calendar_client as client
 from app.services.google_calendar_account_service import GoogleCalendarAccountService
+from app.services.task_service import TaskService
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ class GoogleCalendarSyncService:
         self.db = db
         self.accounts = GoogleCalendarAccountService(db)
         self.events = EventRepository(db)
+        self.tasks = TaskService(db)
 
     # ---------------- Pull (Google -> Tríade) ----------------
 
@@ -99,11 +101,23 @@ class GoogleCalendarSyncService:
 
         fields = self._from_google_event(item)
         if existing is not None:
-            await self.events.update(existing, **fields)
+            event = await self.events.update(existing, **fields)
         else:
-            await self.events.create(
+            event = await self.events.create(
                 user_id=account.user_id, google_account_id=account.id, google_event_id=google_event_id, **fields
             )
+        await self.tasks.sync_from_event(event)
+
+    def _extract_meeting_link(self, item: dict) -> str | None:
+        """Prioriza `hangoutLink` (Google Meet padrão); cai pro primeiro
+        entry point de vídeo em `conferenceData` (cobre Zoom/outros
+        configurados como conferência do evento)."""
+        if item.get("hangoutLink"):
+            return item["hangoutLink"]
+        for entry_point in item.get("conferenceData", {}).get("entryPoints", []):
+            if entry_point.get("entryPointType") == "video":
+                return entry_point.get("uri")
+        return None
 
     def _from_google_event(self, item: dict) -> dict:
         start = item.get("start", {})
@@ -126,6 +140,7 @@ class GoogleCalendarSyncService:
             "title": item.get("summary") or "(sem título)",
             "description": item.get("description"),
             "location": item.get("location"),
+            "meeting_link": self._extract_meeting_link(item),
             "all_day": all_day,
             "start_at": start_at,
             "end_at": end_at,

@@ -35,6 +35,7 @@ def _form_values(event: Event | None, prefill_start: str, prefill_end: str) -> d
             "color": "#6366f1",
             "recurrence_rule": "",
             "google_account_id": "",
+            "meeting_link": "",
         }
     return {
         "id": str(event.id),
@@ -48,6 +49,7 @@ def _form_values(event: Event | None, prefill_start: str, prefill_end: str) -> d
         "color": event.color or "#6366f1",
         "recurrence_rule": event.recurrence_rule or "",
         "google_account_id": str(event.google_account_id) if event.google_account_id else "",
+        "meeting_link": event.meeting_link or "",
     }
 
 

@@ -9,6 +9,7 @@ from app.models.base import naive_utc
 from app.models.event import Event
 from app.repositories.event_repository import EventRepository
 from app.schemas.event import EventCreate, EventUpdate
+from app.services.task_service import TaskService
 
 
 class RecurrenceGoogleConflictError(ValueError):
@@ -25,6 +26,7 @@ def _assert_recurrence_google_compatible(recurrence_rule: str | None, google_acc
 class EventService:
     def __init__(self, db: AsyncSession):
         self.repo = EventRepository(db)
+        self.tasks = TaskService(db)
 
     async def list_in_range(self, user_id: uuid.UUID, start: datetime, end: datetime) -> list[Event]:
         # `start`/`end` chegam timezone-aware do FullCalendar (ISO 8601 com
@@ -47,6 +49,7 @@ class EventService:
         _assert_recurrence_google_compatible(data.recurrence_rule, data.google_account_id)
         conflict = await self.has_conflict(user_id, data.start_at, data.end_at)
         event = await self.repo.create(user_id=user_id, **data.model_dump())
+        await self.tasks.sync_from_event(event)
         return event, conflict
 
     async def update(self, event: Event, data: EventUpdate) -> tuple[Event, bool]:
@@ -58,6 +61,7 @@ class EventService:
         end = payload.get("end_at", event.end_at)
         conflict = await self.has_conflict(event.user_id, start, end, exclude_id=event.id)
         event = await self.repo.update(event, **payload)
+        await self.tasks.sync_from_event(event)
         return event, conflict
 
     async def delete(self, event: Event) -> None:

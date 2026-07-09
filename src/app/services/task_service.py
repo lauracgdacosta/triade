@@ -6,14 +6,16 @@ from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.enums import TaskStatus
+from app.models.event import Event
 from app.models.task import Task
+from app.models.user import User
 from app.repositories.attachment_repository import AttachmentRepository
 from app.repositories.kanban_repository import KanbanBoardRepository, KanbanColumnRepository
 from app.repositories.task_repository import TaskRepository
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.services import storage_service
 from app.services.tag_service import TagService
-from app.utils.datetime_utils import utcnow
+from app.utils.datetime_utils import to_local, utcnow
 from app.utils.sanitize import sanitize_html
 
 
@@ -67,7 +69,18 @@ class TaskService:
     async def create(self, user_id: uuid.UUID, data: TaskCreate) -> Task:
         payload = data.model_dump(exclude={"tag_ids"})
         payload["description"] = sanitize_html(payload.get("description"))
-        payload["kanban_column_id"] = await self._kanban_column_id_for_status(user_id, TaskStatus.PENDING)
+        column_id = payload.pop("kanban_column_id", None)
+        if column_id is not None:
+            # Criação a partir de uma coluna específica do Kanban (botão "+"
+            # de uma coluna) — herda o status dela quando mapeada, em vez do
+            # PENDING padrão, e entra no fim da coluna escolhida.
+            column = await self.kanban_column_repo.get(column_id)
+            if column is not None and column.maps_to_status is not None:
+                payload["status"] = column.maps_to_status
+            payload["kanban_column_id"] = column_id
+            payload["kanban_position"] = len(await self.repo.list_by_kanban_column(user_id, column_id))
+        else:
+            payload["kanban_column_id"] = await self._kanban_column_id_for_status(user_id, TaskStatus.PENDING)
         if payload.get("is_recurring") and payload.get("date") is None:
             # A recorrência usa `date` como âncora para saber se já existe
             # ocorrência de hoje (ver ensure_recurring_occurrences); sem data
@@ -93,6 +106,41 @@ class TaskService:
         for attachment in list(task.attachments):
             await storage_service.delete_attachment(attachment.file_url)
         await self.repo.delete(task)
+
+    async def sync_from_event(self, event: Event) -> Task | None:
+        """Cria ou atualiza a tarefa vinculada a um compromisso da Agenda
+        (criado localmente ou puxado do Google) — mantém título, data/hora,
+        local e link de reunião em dia com o evento. Nunca mexe em status,
+        prioridade, coluna do Kanban etc. depois da criação inicial, pra não
+        sobrescrever o que o usuário já fez na tarefa. Compromissos
+        dia-inteiro não têm tarefa vinculada; se um evento com tarefa
+        vinculada virar dia-inteiro numa edição, a tarefa é removida."""
+        existing = await self.repo.get_by_source_event(event.user_id, event.id)
+        if event.all_day:
+            if existing is not None:
+                await self.delete(existing)
+            return None
+
+        user = await self.db.get(User, event.user_id)
+        tz_name = user.timezone if user else "UTC"
+        local_start = to_local(event.start_at, tz_name)
+
+        payload = {
+            "title": event.title,
+            "description": sanitize_html(event.description),
+            "date": local_start.date(),
+            "time": local_start.time(),
+            "location": event.location,
+            "meeting_link": event.meeting_link,
+        }
+        if existing is not None:
+            return await self.repo.update(existing, **payload)
+        return await self.repo.create(
+            user_id=event.user_id,
+            source_event_id=event.id,
+            kanban_column_id=await self._kanban_column_id_for_status(event.user_id, TaskStatus.PENDING),
+            **payload,
+        )
 
     async def duplicate(self, task: Task) -> Task:
         clone = await self.repo.create(

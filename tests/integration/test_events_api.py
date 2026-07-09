@@ -67,6 +67,14 @@ async def test_timed_event_response_marks_start_end_as_utc(auth_client):
     assert body["end_at"] == "2026-05-01T10:00:00Z"
 
 
+async def test_event_response_exposes_meeting_link_field(auth_client):
+    create_res = await auth_client.post(
+        "/api/v1/events",
+        json={"title": "Sem reunião", "start_at": "2026-05-01T09:00:00Z", "end_at": "2026-05-01T10:00:00Z"},
+    )
+    assert create_res.json()["meeting_link"] is None
+
+
 async def test_all_day_event_response_has_no_utc_marker(auth_client):
     create_res = await auth_client.post(
         "/api/v1/events",

@@ -13,6 +13,9 @@
                 {% if task.date %}<span><i class="fa-regular fa-calendar"></i> {{ task.date.strftime('%d/%m') }}</span>{% endif %}
                 {% if task.time %}<span><i class="fa-regular fa-clock"></i> {{ task.time.strftime('%H:%M') }}</span>{% endif %}
                 {% if task.planned_duration_minutes %}<span>{{ task.planned_duration_minutes }} min</span>{% endif %}
+                {% if task.meeting_link and task.meeting_link.startswith('http') %}
+                <a href="{{ task.meeting_link }}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Entrar na reunião"><i class="fa-solid fa-video"></i></a>
+                {% endif %}
                 {% for tag in task.tags %}<span class="chip">{{ tag.name }}</span>{% endfor %}
             </div>
         </div>

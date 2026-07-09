@@ -1,6 +1,7 @@
 """Helpers de data/hora usados pelo Dashboard e pela Agenda."""
 
 from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 
 def utcnow() -> datetime:
@@ -18,6 +19,16 @@ def utcnow() -> datetime:
     são a exceção — essas *são* `DateTime(timezone=True)`.)
     """
     return datetime.now(UTC).replace(tzinfo=None)
+
+
+def to_local(value: datetime, tz_name: str) -> datetime:
+    """Converte um datetime naive-UTC (ver `utcnow`) pro horário de parede
+    local do fuso informado, ainda naive — usado pra popular campos que não
+    guardam fuso nenhum (ex.: `Task.date`/`Task.time`, preenchidos hoje via
+    inputs HTML sem conversão). Sem isso, copiar um `Event.start_at` (sempre
+    UTC) direto pra esses campos reintroduziria o mesmo bug de horário
+    adiantado já corrigido na exibição dos eventos."""
+    return value.replace(tzinfo=UTC).astimezone(ZoneInfo(tz_name)).replace(tzinfo=None)
 
 
 def start_of_week(reference: date, week_start_monday: bool = True) -> date:

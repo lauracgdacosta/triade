@@ -6,6 +6,7 @@ import httpx
 import pytest
 import respx
 
+from app.models.enums import TaskStatus
 from app.models.user import User
 from app.schemas.event import EventCreate
 from app.services import google_calendar_client as client
@@ -249,3 +250,64 @@ async def test_push_delete_calls_google_delete(db_session, test_user: User):
 
     await GoogleCalendarSyncService(db_session).push_delete(event)
     assert route.called
+
+
+async def test_extract_meeting_link_prefers_hangout_link(db_session):
+    sync = GoogleCalendarSyncService(db_session)
+    link = sync._extract_meeting_link(
+        {"hangoutLink": "https://meet.google.com/abc", "conferenceData": {"entryPoints": [{"entryPointType": "video", "uri": "https://outro.com"}]}}
+    )
+    assert link == "https://meet.google.com/abc"
+
+
+async def test_extract_meeting_link_falls_back_to_conference_data_video_entry_point(db_session):
+    sync = GoogleCalendarSyncService(db_session)
+    link = sync._extract_meeting_link(
+        {
+            "conferenceData": {
+                "entryPoints": [
+                    {"entryPointType": "phone", "uri": "tel:+551140028922"},
+                    {"entryPointType": "video", "uri": "https://zoom.us/j/123"},
+                ]
+            }
+        }
+    )
+    assert link == "https://zoom.us/j/123"
+
+
+async def test_extract_meeting_link_returns_none_when_absent(db_session):
+    sync = GoogleCalendarSyncService(db_session)
+    assert sync._extract_meeting_link({}) is None
+
+
+@respx.mock
+async def test_pull_account_captures_meeting_link_and_creates_linked_task(db_session, test_user: User):
+    account = await _connected_account(db_session, test_user.id)
+    respx.get(_EVENTS_URL).mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "items": [
+                    {
+                        "id": "gcal-com-reuniao",
+                        "summary": "Daily",
+                        "start": {"dateTime": "2026-01-10T09:00:00-03:00"},
+                        "end": {"dateTime": "2026-01-10T09:30:00-03:00"},
+                        "hangoutLink": "https://meet.google.com/xyz-abcd-efg",
+                    }
+                ],
+                "nextSyncToken": "sync-token-2",
+            },
+        )
+    )
+
+    sync = GoogleCalendarSyncService(db_session)
+    await sync.pull_account(account)
+
+    events = await sync.events.list_in_range(test_user.id, datetime(2026, 1, 1), datetime(2026, 1, 31))
+    assert events[0].meeting_link == "https://meet.google.com/xyz-abcd-efg"
+
+    tasks = await sync.tasks.list_by_status(test_user.id, TaskStatus.PENDING)
+    assert len(tasks) == 1
+    assert tasks[0].source_event_id == events[0].id
+    assert tasks[0].meeting_link == "https://meet.google.com/xyz-abcd-efg"

@@ -64,11 +64,17 @@ async def tasks_list_fragment(
 
 
 @router.get("/new", response_class=HTMLResponse)
-async def new_task_form(request: Request, user: User = Depends(get_current_user_web), db: AsyncSession = Depends(get_db)):
+async def new_task_form(
+    request: Request,
+    kanban_column_id: uuid.UUID | None = None,
+    user: User = Depends(get_current_user_web),
+    db: AsyncSession = Depends(get_db),
+):
     options = await _form_options(db, user.id)
     context = {
         "request": request, "task": None, **options,
         "priorities": list(Priority), "csrf_token": get_or_create_csrf_token(request),
+        "prefill_kanban_column_id": str(kanban_column_id) if kanban_column_id else "",
     }
     return render(request, "fragments/task_form.html", context)
 
@@ -82,6 +88,7 @@ async def edit_task_form(
     context = {
         "request": request, "task": task, **options,
         "priorities": list(Priority), "csrf_token": get_or_create_csrf_token(request),
+        "prefill_kanban_column_id": "",
     }
     return render(request, "fragments/task_form.html", context)
 
@@ -103,6 +110,7 @@ async def create_task(
     color: str = Form(""),
     location: str = Form(""),
     is_recurring: str = Form(""),
+    kanban_column_id: str = Form(""),
     tag_ids: list[str] = Form([]),
     status_filter: str = Form("pending"),
     csrf_token: str = Form(...),
@@ -125,6 +133,7 @@ async def create_task(
         color=color or None,
         location=location or None,
         is_recurring=bool(is_recurring),
+        kanban_column_id=kanban_column_id or None,
         tag_ids=[uuid.UUID(t) for t in tag_ids if t],
     )
     await TaskService(db).create(user.id, payload)

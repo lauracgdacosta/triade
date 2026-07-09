@@ -6,24 +6,35 @@
     <span class="text-muted small">Arraste os cartões entre as colunas</span>
 </div>
 
+<div id="task-form-container"></div>
+<div id="task-list" style="display:none"></div>
+
 <div class="kanban-board" id="kanban-board"
      data-supabase-url="{{ supabase_url }}" data-supabase-anon-key="{{ supabase_anon_key }}"
      data-user-id="{{ user.id }}">
     {% for column in board.columns %}
     <div class="kanban-column" data-column-id="{{ column.id }}">
-        <div class="kanban-column-header">
+        <div class="kanban-column-header d-flex align-items-center">
             <span class="kanban-column-dot" style="background: {{ column.color }}"></span>
             {{ column.name }}
             <span class="text-muted small ms-1">{{ tasks_by_column.get(column.id, []) | length }}</span>
+            <button type="button" class="btn-icon ms-auto" title="Nova tarefa"
+                    hx-get="/tasks/new?kanban_column_id={{ column.id }}" hx-target="#task-form-container" hx-swap="innerHTML">
+                <i class="fa-solid fa-plus"></i>
+            </button>
         </div>
         <div class="kanban-cards" data-column-id="{{ column.id }}">
             {% for task in tasks_by_column.get(column.id, []) %}
-            <div class="kanban-card" draggable="true" data-task-id="{{ task.id }}">
+            <div class="kanban-card" draggable="true" data-task-id="{{ task.id }}"
+                 hx-get="/tasks/{{ task.id }}/edit" hx-target="#task-form-container" hx-swap="innerHTML">
                 <div class="d-flex align-items-center gap-2 mb-1">
                     <span class="priority-dot priority-{{ task.priority.value }}"></span>
                     <strong class="small">{{ task.title }}</strong>
                 </div>
                 {% if task.date %}<div class="text-muted" style="font-size:.75rem"><i class="fa-regular fa-calendar"></i> {{ task.date.strftime('%d/%m') }}</div>{% endif %}
+                {% if task.meeting_link and task.meeting_link.startswith('http') %}
+                <div style="font-size:.75rem"><a href="{{ task.meeting_link }}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Entrar na reunião"><i class="fa-solid fa-video"></i> Reunião</a></div>
+                {% endif %}
             </div>
             {% endfor %}
         </div>

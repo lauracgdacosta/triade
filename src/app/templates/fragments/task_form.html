@@ -11,6 +11,13 @@
 
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <input type="hidden" name="status_filter" value="{{ status_filter or 'pending' }}">
+            <input type="hidden" name="kanban_column_id" value="{{ prefill_kanban_column_id or '' }}">
+
+            {% if task and task.source_event_id %}
+            <div class="alert alert-info py-2 small mb-3">
+                <i class="fa-solid fa-link me-1"></i> Vinculada a um compromisso da Agenda — título, data/hora, local e link de reunião são atualizados automaticamente quando o compromisso muda.
+            </div>
+            {% endif %}
 
             <div class="mb-3">
                 <label class="form-label">Título</label>
@@ -118,6 +125,14 @@
                     <input type="text" name="location" class="form-control" value="{{ task.location if task and task.location else '' }}">
                 </div>
             </div>
+
+            {% if task and task.meeting_link and task.meeting_link.startswith('http') %}
+            <div class="mb-3">
+                <a href="{{ task.meeting_link }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+                    <i class="fa-solid fa-video me-1"></i> Entrar na reunião
+                </a>
+            </div>
+            {% endif %}
 
             <div class="mb-3">
                 <label class="form-label">Etiquetas</label>

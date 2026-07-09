@@ -63,6 +63,16 @@ class Task(Base, UUIDPkMixin, TimestampMixin):
 
     color: Mapped[str | None] = mapped_column(String(20))
     location: Mapped[str | None] = mapped_column(String(255))
+    meeting_link: Mapped[str | None] = mapped_column(String(500))
+
+    # Vínculo com o compromisso da Agenda que gerou esta tarefa (ver
+    # TaskService.sync_from_event) — NULL = tarefa criada diretamente pelo
+    # usuário, nunca ligada a um evento. ON DELETE CASCADE: apagar o evento
+    # apaga a tarefa vinculada automaticamente, sem código extra nos
+    # caminhos de delete de Event (local ou sync do Google).
+    source_event_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("events.id", ondelete="CASCADE"), index=True
+    )
 
     completed_at: Mapped[dt.datetime | None] = mapped_column()
 

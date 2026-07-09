@@ -39,6 +39,11 @@ class TaskRepository(BaseRepository[Task]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def get_by_source_event(self, user_id: uuid.UUID, event_id: uuid.UUID) -> Task | None:
+        stmt = self._base_stmt(user_id).where(Task.source_event_id == event_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def list_by_kanban_column(self, user_id: uuid.UUID, column_id: uuid.UUID) -> list[Task]:
         stmt = self._base_stmt(user_id).where(Task.kanban_column_id == column_id).order_by(
             Task.kanban_position

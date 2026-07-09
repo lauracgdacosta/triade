@@ -1,5 +1,15 @@
 // Kanban — drag-and-drop nativo (HTML5) + persistência via fetch na API JSON.
 document.addEventListener("DOMContentLoaded", () => {
+    // Criar/editar tarefa reaproveita os fragmentos HTMX de /tasks (ver
+    // #task-form-container/#task-list em kanban.html) — o POST de salvar
+    // sempre devolve fragments/task_list.html num #task-list, que aqui é só
+    // um destino "dummy" oculto; usamos o swap nele como sinal de que algo
+    // foi salvo pra recarregar o board (o realtime do Supabase já cobre
+    // produção, isso garante o mesmo em dev local/SQLite sem realtime).
+    document.body.addEventListener("htmx:afterSwap", (e) => {
+        if (e.detail.target.id === "task-list") window.location.reload();
+    });
+
     let draggedCard = null;
 
     document.querySelectorAll(".kanban-card").forEach((card) => {

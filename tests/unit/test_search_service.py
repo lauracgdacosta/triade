@@ -31,7 +31,9 @@ async def test_search_finds_matches_across_entities(db_session, test_user: User)
 
     response = await SearchService(db_session).search(test_user.id, "orçamento")
 
-    assert response.total == 4
+    # 5, não 4: o evento também gera automaticamente uma tarefa vinculada com
+    # o mesmo título (ver TaskService.sync_from_event), que casa com a busca.
+    assert response.total == 5
     types = {r.entity_type for r in response.results}
     assert types == {"task", "project", "goal", "event"}
 

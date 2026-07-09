@@ -45,6 +45,14 @@ document.addEventListener("DOMContentLoaded", () => {
         eventClick: (info) => {
             window.location.href = `/agenda/${info.event.id}/edit`;
         },
+        eventDidMount: (info) => {
+            const link = info.event.extendedProps.meeting_link;
+            if (!link || !link.startsWith("http")) return;
+            const icon = document.createElement("i");
+            icon.className = "fa-solid fa-video ms-1";
+            icon.title = "Tem link de reunião";
+            (info.el.querySelector(".fc-event-title") || info.el).appendChild(icon);
+        },
         eventDrop: (info) => updateEventTimes(info.event, info.revert),
         eventResize: (info) => updateEventTimes(info.event, info.revert),
     });

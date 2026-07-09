@@ -30,6 +30,7 @@ class TaskCreate(ORMModel):
     color: str | None = None
     location: str | None = Field(default=None, max_length=255)
     is_recurring: bool = False
+    kanban_column_id: uuid.UUID | None = None
     tag_ids: list[uuid.UUID] = Field(default_factory=list)
 
 
@@ -77,6 +78,8 @@ class TaskRead(ORMModel):
     kanban_position: int
     color: str | None
     location: str | None
+    meeting_link: str | None
+    source_event_id: uuid.UUID | None
     completed_at: dt.datetime | None
     is_recurring: bool
     recurring_parent_id: uuid.UUID | None

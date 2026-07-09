@@ -1,11 +1,12 @@
 """Testes do TaskService: CRUD e ações (duplicar/arquivar/concluir/cancelar/reabrir)."""
 
-from datetime import date
+from datetime import date, datetime, time
 
 import pytest
 
 from app.models.enums import Priority, TaskStatus
 from app.models.user import User
+from app.repositories.event_repository import EventRepository
 from app.repositories.kanban_repository import KanbanBoardRepository
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.services.task_service import TaskService
@@ -192,3 +193,87 @@ async def test_stop_recurrence_from_child_stops_future_generation(db_session, te
     assert await service.list_by_date(test_user.id, date(2026, 1, 3)) == []
     refreshed_template = await service.get(template.id, test_user.id)
     assert refreshed_template.is_recurring is False
+
+
+async def test_create_with_kanban_column_id_uses_given_column_and_status(db_session, test_user: User):
+    service = TaskService(db_session)
+    board = await KanbanBoardRepository(db_session).get_default_for_user(test_user.id)
+    done_column = next(c for c in board.columns if c.maps_to_status == TaskStatus.DONE)
+    task = await service.create(
+        test_user.id, TaskCreate(title="Direto pro Concluído", kanban_column_id=done_column.id)
+    )
+    assert task.kanban_column_id == done_column.id
+    assert task.status == TaskStatus.DONE
+
+
+async def test_sync_from_event_creates_linked_task_with_local_date_time(db_session, test_user: User):
+    # test_user.timezone é "America/Sao_Paulo" (padrão do modelo) = UTC-3
+    # (sem horário de verão desde 2019) — 09:00 UTC deve virar 06:00 local.
+    event = await EventRepository(db_session).create(
+        user_id=test_user.id,
+        title="Reunião",
+        start_at=datetime(2026, 1, 10, 9),
+        end_at=datetime(2026, 1, 10, 10),
+        all_day=False,
+        location="Sala 1",
+        meeting_link="https://meet.google.com/abc-defg-hij",
+    )
+    task = await TaskService(db_session).sync_from_event(event)
+    assert task is not None
+    assert task.source_event_id == event.id
+    assert task.title == "Reunião"
+    assert task.location == "Sala 1"
+    assert task.meeting_link == "https://meet.google.com/abc-defg-hij"
+    assert task.date == date(2026, 1, 10)
+    assert task.time == time(6, 0)
+    assert task.kanban_column_id is not None
+
+
+async def test_sync_from_event_skips_all_day_event(db_session, test_user: User):
+    event = await EventRepository(db_session).create(
+        user_id=test_user.id, title="Feriado", start_at=datetime(2026, 1, 10), end_at=datetime(2026, 1, 10), all_day=True
+    )
+    task = await TaskService(db_session).sync_from_event(event)
+    assert task is None
+
+
+async def test_sync_from_event_updates_existing_linked_task_without_duplicating(db_session, test_user: User):
+    event = await EventRepository(db_session).create(
+        user_id=test_user.id, title="Original", start_at=datetime(2026, 1, 10, 9), end_at=datetime(2026, 1, 10, 10), all_day=False
+    )
+    service = TaskService(db_session)
+    first = await service.sync_from_event(event)
+
+    event = await EventRepository(db_session).update(event, title="Renomeado")
+    second = await service.sync_from_event(event)
+
+    assert second.id == first.id
+    assert second.title == "Renomeado"
+    assert len(await service.list_by_status(test_user.id, TaskStatus.PENDING)) == 1
+
+
+async def test_sync_from_event_removes_task_when_event_becomes_all_day(db_session, test_user: User):
+    event = await EventRepository(db_session).create(
+        user_id=test_user.id, title="Vira dia-inteiro", start_at=datetime(2026, 1, 10, 9), end_at=datetime(2026, 1, 10, 10), all_day=False
+    )
+    service = TaskService(db_session)
+    task = await service.sync_from_event(event)
+
+    event = await EventRepository(db_session).update(event, all_day=True)
+    result = await service.sync_from_event(event)
+
+    assert result is None
+    assert await service.repo.get(task.id) is None
+
+
+async def test_sync_from_event_sanitizes_description(db_session, test_user: User):
+    event = await EventRepository(db_session).create(
+        user_id=test_user.id,
+        title="Com script malicioso",
+        description="<script>alert(1)</script>texto normal",
+        start_at=datetime(2026, 1, 10, 9),
+        end_at=datetime(2026, 1, 10, 10),
+        all_day=False,
+    )
+    task = await TaskService(db_session).sync_from_event(event)
+    assert "<script>" not in task.description

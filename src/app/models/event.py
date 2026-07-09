@@ -24,6 +24,7 @@ class Event(Base, UUIDPkMixin, TimestampMixin):
     location: Mapped[str | None] = mapped_column(String(255))
     color: Mapped[str | None] = mapped_column(String(20))
     recurrence_rule: Mapped[str | None] = mapped_column(String(500))  # RFC5545 RRULE
+    meeting_link: Mapped[str | None] = mapped_column(String(500))  # extraído do Google (hangoutLink/conferenceData)
 
     category_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("categories.id", ondelete="SET NULL"), index=True

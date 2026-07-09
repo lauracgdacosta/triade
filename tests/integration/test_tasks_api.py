@@ -18,6 +18,19 @@ async def test_create_and_get_task(auth_client):
     assert get_res.json()["title"] == "Tarefa via API"
 
 
+async def test_create_task_with_kanban_column_id_lands_in_that_column(auth_client):
+    board = (await auth_client.get("/api/v1/kanban/board")).json()
+    done_column = next(c for c in board["columns"] if c["maps_to_status"] == "done")
+
+    create_res = await auth_client.post(
+        "/api/v1/tasks", json={"title": "Direto no Concluído", "kanban_column_id": done_column["id"]}
+    )
+    assert create_res.status_code == 201
+    body = create_res.json()
+    assert body["kanban_column_id"] == done_column["id"]
+    assert body["status"] == "done"
+
+
 async def test_update_task(auth_client):
     create_res = await auth_client.post("/api/v1/tasks", json={"title": "Original"})
     task_id = create_res.json()["id"]

@@ -6,9 +6,11 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
+from app.models.enums import TaskStatus
 from app.models.user import User
 from app.schemas.event import EventCreate, EventUpdate
 from app.services.event_service import EventService, RecurrenceGoogleConflictError
+from app.services.task_service import TaskService
 
 pytestmark = pytest.mark.asyncio
 
@@ -139,3 +141,58 @@ async def test_update_setting_google_account_on_already_recurring_event_is_rejec
     )
     with pytest.raises(RecurrenceGoogleConflictError):
         await service.update(event, EventUpdate(google_account_id=uuid.uuid4()))
+
+
+async def test_create_event_generates_linked_task(db_session, test_user: User):
+    service = EventService(db_session)
+    event, _ = await service.create(
+        test_user.id,
+        EventCreate(title="Com tarefa", start_at=datetime(2026, 1, 10, 9), end_at=datetime(2026, 1, 10, 10)),
+    )
+    tasks = await TaskService(db_session).list_by_status(test_user.id, TaskStatus.PENDING)
+    assert len(tasks) == 1
+    assert tasks[0].source_event_id == event.id
+    assert tasks[0].title == "Com tarefa"
+
+
+async def test_update_event_syncs_linked_task_title(db_session, test_user: User):
+    service = EventService(db_session)
+    event, _ = await service.create(
+        test_user.id,
+        EventCreate(title="Original", start_at=datetime(2026, 1, 10, 9), end_at=datetime(2026, 1, 10, 10)),
+    )
+    await service.update(event, EventUpdate(title="Renomeado"))
+    tasks = await TaskService(db_session).list_by_status(test_user.id, TaskStatus.PENDING)
+    assert len(tasks) == 1
+    assert tasks[0].title == "Renomeado"
+
+
+async def test_delete_event_cascades_to_linked_task(db_session, test_user: User):
+    service = EventService(db_session)
+    event, _ = await service.create(
+        test_user.id,
+        EventCreate(title="Vai sumir", start_at=datetime(2026, 1, 10, 9), end_at=datetime(2026, 1, 10, 10)),
+    )
+    task_service = TaskService(db_session)
+    linked_id = (await task_service.list_by_status(test_user.id, TaskStatus.PENDING))[0].id
+
+    await service.delete(event)
+    await db_session.flush()
+    # `session.get()` consultaria o identity map em vez do banco — sem isso o
+    # teste poderia "passar" mesmo se o cascade não tivesse disparado de
+    # verdade, já que o objeto Python antigo continuaria em memória.
+    db_session.expire_all()
+
+    assert await task_service.repo.get(linked_id) is None
+
+
+async def test_all_day_event_does_not_generate_task(db_session, test_user: User):
+    service = EventService(db_session)
+    await service.create(
+        test_user.id,
+        EventCreate(
+            title="Feriado", start_at=datetime(2026, 1, 10), end_at=datetime(2026, 1, 11), all_day=True
+        ),
+    )
+    tasks = await TaskService(db_session).list_by_status(test_user.id, TaskStatus.PENDING)
+    assert tasks == []

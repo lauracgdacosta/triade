@@ -184,6 +184,7 @@ CREATE TABLE events (
     location VARCHAR(255),
     color VARCHAR(20),
     recurrence_rule VARCHAR(500),
+    meeting_link VARCHAR(500),
     category_id UUID,
     project_id UUID,
     google_account_id UUID,
@@ -266,6 +267,8 @@ CREATE TABLE tasks (
     kanban_position INTEGER NOT NULL, 
     color VARCHAR(20),
     location VARCHAR(255),
+    meeting_link VARCHAR(500),
+    source_event_id UUID,
     completed_at TIMESTAMP WITHOUT TIME ZONE,
     is_recurring BOOLEAN NOT NULL DEFAULT false,
     recurring_parent_id UUID,
@@ -279,12 +282,15 @@ CREATE TABLE tasks (
     FOREIGN KEY(project_id) REFERENCES projects (id) ON DELETE SET NULL,
     FOREIGN KEY(role_id) REFERENCES roles (id) ON DELETE SET NULL,
     FOREIGN KEY(recurring_parent_id) REFERENCES tasks (id) ON DELETE SET NULL,
+    FOREIGN KEY(source_event_id) REFERENCES events (id) ON DELETE CASCADE,
     FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE INDEX ix_tasks_category_id ON tasks (category_id);
 
 CREATE INDEX ix_tasks_recurring_parent_id ON tasks (recurring_parent_id);
+
+CREATE INDEX ix_tasks_source_event_id ON tasks (source_event_id);
 
 CREATE INDEX ix_tasks_date ON tasks (date);
 

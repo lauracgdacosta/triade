@@ -68,6 +68,7 @@ class EventRead(ORMModel):
     location: str | None
     color: str | None
     recurrence_rule: str | None
+    meeting_link: str | None
     category_id: uuid.UUID | None
     project_id: uuid.UUID | None
     google_account_id: uuid.UUID | None
