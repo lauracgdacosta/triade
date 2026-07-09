@@ -8,6 +8,7 @@ import respx
 
 from app.models.user import User
 from app.schemas.event import EventCreate
+from app.services import google_calendar_client as client
 from app.services.event_service import EventService
 from app.services.google_calendar_account_service import GoogleCalendarAccountService
 from app.services.google_calendar_sync_service import GoogleCalendarSyncService
@@ -112,7 +113,7 @@ async def test_pull_account_insufficient_scope_deactivates_account(db_session, t
         )
     )
 
-    with pytest.raises(Exception):
+    with pytest.raises(client.GoogleCalendarError):
         await GoogleCalendarSyncService(db_session).pull_account(account)
 
     refreshed = await GoogleCalendarAccountService(db_session).get(account.id, test_user.id)
